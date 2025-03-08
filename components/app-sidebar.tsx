@@ -2,7 +2,7 @@
 
 import {
     Sidebar,
-    SidebarContent,
+    SidebarContent, SidebarFooter,
     SidebarGroup,
     SidebarGroupContent,
     SidebarGroupLabel,
@@ -16,6 +16,7 @@ import {Menu, User, UserPlus} from "lucide-react";
 import {cn} from "@/lib/utils";
 import Link from "next/link";
 import {IdentificationBadge, MoneyWavy, Motorcycle, PresentationChart, ReadCvLogo} from "@phosphor-icons/react";
+import {ThemeToggle} from "@/components/theme-toggle";
 
 const menuItems = [
     {title: "Dashboard", url: "/dashboard", icon: PresentationChart},
@@ -36,7 +37,8 @@ const menuItems = [
 
 export function AppSidebar({collapsed, setCollapsed}: { collapsed: boolean; setCollapsed: (val: boolean) => void }) {
     return (
-        <Sidebar className={cn("transition-all duration-300 h-screen fixed px-2", collapsed ? "w-16" : "w-64")}>
+        <Sidebar
+            className={cn("transition-all duration-300 h-screen fixed px-2 bg-sidebar", collapsed ? "w-16" : "w-64")}>
             {/* Sidebar Header */}
             <SidebarHeader>
                 <div className={`flex ${collapsed && "flex-col"} items-center justify-between p-2`}>
@@ -108,6 +110,11 @@ export function AppSidebar({collapsed, setCollapsed}: { collapsed: boolean; setC
                     </SidebarGroupContent>
                 </SidebarGroup>
             </SidebarContent>
+            <SidebarFooter>
+                <div className="flex items-center justify-center gap-2">
+                    <ThemeToggle/>
+                </div>
+            </SidebarFooter>
         </Sidebar>
     );
 }
