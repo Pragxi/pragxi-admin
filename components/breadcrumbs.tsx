@@ -2,10 +2,12 @@ import React, {Fragment} from 'react';
 import {Home} from "lucide-react";
 import Link from "next/link";
 import {usePathname} from "next/navigation";
+import {ThemeToggle} from "@/components/theme-toggle";
 
 const Breadcrumbs = () => {
     const pathname = usePathname();
-// Generate breadcrumb items
+
+    // Generate breadcrumb items
     const breadcrumbItems = pathname
         .split("/")
         .filter(Boolean) // Remove empty strings
@@ -15,17 +17,23 @@ const Breadcrumbs = () => {
         });
 
     return (
-        <div className="flex gap-1 text-gray-500 motion-preset-slide-right mb-4">
-            <Home size={20}/>
-            <span>{">"}</span>
-            {breadcrumbItems?.map(({label, href}, index) => (
-                <Fragment key={href}>
-                    <Link href={href}>
-                        {label}
-                    </Link>
-                    {(index + 1 !== breadcrumbItems.length) && <span>{">"}</span>}
-                </Fragment>
-            ))}
+        <div className="flex text-gray-500 mb-4 justify-between">
+            <div className="flex gap-1">
+                <Home size={20} className="motion-preset-slide-right"/>
+                <span>{">"}</span>
+                {breadcrumbItems?.map(({label, href}, index) => (
+                    <Fragment key={href}>
+                        <Link href={href} className="motion-preset-slide-right">
+                            {label}
+                        </Link>
+                        {(index + 1 !== breadcrumbItems.length) &&
+                            <span className="motion-preset-slide-right">{">"}</span>}
+                    </Fragment>
+                ))}</div>
+
+            <div className="motion-preset-blur-left-lg">
+                <ThemeToggle/>
+            </div>
         </div>
     );
 };
