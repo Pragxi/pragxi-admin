@@ -3,6 +3,7 @@
 import {
     Sidebar,
     SidebarContent,
+    SidebarFooter,
     SidebarGroup,
     SidebarGroupContent,
     SidebarGroupLabel,
@@ -16,6 +17,7 @@ import {Menu, User, UserPlus} from "lucide-react";
 import {cn} from "@/lib/utils";
 import Link from "next/link";
 import {IdentificationBadge, MoneyWavy, Motorcycle, PresentationChart, ReadCvLogo} from "@phosphor-icons/react";
+import AuthenticatedAvatar from "@/components/auth/authenticated-avatar";
 
 const menuItems = [
     {title: "Dashboard", url: "/dashboard", icon: PresentationChart},
@@ -36,7 +38,8 @@ const menuItems = [
 
 export function AppSidebar({collapsed, setCollapsed}: { collapsed: boolean; setCollapsed: (val: boolean) => void }) {
     return (
-        <Sidebar className={cn("transition-all duration-300 h-screen fixed px-2", collapsed ? "w-16" : "w-64")}>
+        <Sidebar
+            className={cn("transition-all duration-300 h-screen fixed px-2 bg-sidebar", collapsed ? "w-16" : "w-64")}>
             {/* Sidebar Header */}
             <SidebarHeader>
                 <div className={`flex ${collapsed && "flex-col"} items-center justify-between p-2`}>
@@ -51,7 +54,7 @@ export function AppSidebar({collapsed, setCollapsed}: { collapsed: boolean; setC
                                     className="h-12 w-12 rounded-lg"
                                 />
                             </div>
-                            <span className="text-2xl font-black text-slate-900">Pragxi</span>
+                            <span className="text-2xl font-black text-slate-900 dark:text-zinc-400">Pragxi</span>
                         </div>
                     )}
                     <button onClick={() => setCollapsed(!collapsed)} className="p-2 rounded-md hover:bg-gray-200">
@@ -108,6 +111,11 @@ export function AppSidebar({collapsed, setCollapsed}: { collapsed: boolean; setC
                     </SidebarGroupContent>
                 </SidebarGroup>
             </SidebarContent>
+            <SidebarFooter className="w-full">
+                <div className="flex w-full">
+                    <AuthenticatedAvatar collapsed={collapsed}/>
+                </div>
+            </SidebarFooter>
         </Sidebar>
     );
 }

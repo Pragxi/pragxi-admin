@@ -1,19 +1,14 @@
 "use client";
 
-import {Fragment, ReactNode, useEffect, useState} from "react";
+import {ReactNode, useEffect, useState} from "react";
 import {SidebarProvider} from "@/components/ui/sidebar";
 import {AppSidebar} from "@/components/app-sidebar";
 import {cn} from "@/lib/utils";
-import {usePathname} from "next/navigation";
-import Link from "next/link";
-import {Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbSeparator} from "@/components/ui/breadcrumb";
-import {Home} from "lucide-react";
+import Breadcrumbs from "@/components/breadcrumbs";
 
 export default function MainLayout({children}: Readonly<{ children: ReactNode }>) {
-    const [collapsed, setCollapsed] = useState(false);
-    const pathname = usePathname();
+    const [collapsed, setCollapsed] = useState(true);
 
-    // Load sidebar state from localStorage on mount
     useEffect(() => {
         const storedState = localStorage.getItem("sidebarCollapsed");
         if (storedState !== null) {
@@ -21,43 +16,25 @@ export default function MainLayout({children}: Readonly<{ children: ReactNode }>
         }
     }, []);
 
-    // Save sidebar state to localStorage whenever it changes
     useEffect(() => {
         localStorage.setItem("sidebarCollapsed", JSON.stringify(collapsed));
     }, [collapsed]);
 
-    // Generate breadcrumb items
-    const breadcrumbItems = pathname
-        .split("/")
-        .filter(Boolean) // Remove empty strings
-        .map((segment, index, array) => {
-            const path = `/${array.slice(0, index + 1).join("/")}`;
-            return {label: segment, href: path};
-        });
-
-    console.log({breadcrumbItems});
-
     return (
         <SidebarProvider suppressHydrationWarning>
-            <div suppressHydrationWarning>
+            <div suppressHydrationWarning className="w-full">
                 {/* Sidebar */}
                 <AppSidebar collapsed={collapsed} setCollapsed={setCollapsed}/>
 
                 {/* Main Content */}
-                <main className={cn("transition-all duration-300 p-6 w-full", collapsed ? "ml-16" : "ml-64")}>
+                <main className={cn(
+                    "transition-all duration-300 p-6",
+                    collapsed
+                        ? "ml-16 w-[calc(100vw-4rem)]"
+                        : "ml-64 w-[calc(100vw-16rem)]"
+                )}>
                     {/* Breadcrumbs */}
-                    <div className="flex gap-1 text-gray-500">
-                        <Home size={20}/>
-                        <span>{">"}</span>
-                        {breadcrumbItems.map(({label, href}, index) => (
-                            <Fragment key={href}>
-                                <Link href={href}>
-                                    {label}
-                                </Link>
-                                {(index + 1 !== breadcrumbItems.length) && <span>{">"}</span>}
-                            </Fragment>
-                        ))}
-                    </div>
+                    <Breadcrumbs/>
 
                     {/* Page Content */}
                     {children}
