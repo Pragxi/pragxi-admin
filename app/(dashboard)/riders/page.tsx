@@ -19,7 +19,7 @@ import {
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from '@/components/ui/select';
 
 // Dummy data
-const riders = generateRiders(400);
+const riders = generateRiders(85);
 
 const Riders = () => {
     const [searchTerm, setSearchTerm] = useState('');
@@ -95,13 +95,13 @@ const Riders = () => {
                                 {pageSize} rows per page
                             </SelectItem>
                         ))}
-                    </SelectContent>g
+                    </SelectContent>
                 </Select>
             </div>
 
             <Table suppressHydrationWarning>
-                <TableHeader className="bg-gray-100 cursor-pointer">
-                    <TableRow>
+                <TableHeader >
+                    <TableRow className="bg-gray-100 dark:bg-zinc-800 cursor-pointer rounded-2xl">
                         <TableHead>Avatar</TableHead>
                         <TableHead onClick={() => handleSort('name')}>
                             Rider {sortConfig.key === 'name' && (
