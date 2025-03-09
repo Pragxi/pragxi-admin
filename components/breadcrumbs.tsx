@@ -1,5 +1,5 @@
 import React, {Fragment} from 'react';
-import {Home} from "lucide-react";
+import {ChevronLeft, ChevronRight, Home} from "lucide-react";
 import Link from "next/link";
 import {usePathname} from "next/navigation";
 import {ThemeToggle} from "@/components/theme-toggle";
@@ -7,6 +7,7 @@ import {ThemeToggle} from "@/components/theme-toggle";
 const Breadcrumbs = () => {
     const pathname = usePathname();
 
+    console.log({pathname})
     // Generate breadcrumb items
     const breadcrumbItems = pathname
         .split("/")
@@ -18,16 +19,28 @@ const Breadcrumbs = () => {
 
     return (
         <div className="flex text-gray-500 mb-4 justify-between">
-            <div className="flex gap-1">
+            <div className="flex gap-1 items-center">
+                {
+                    pathname !== "/dashboard" && <div
+                        onClick={() => window.history.back()}
+                        className="motion-preset-slide-right border p-2 cursor-pointer
+                    hover:bg-gray-200 transition-all duration-300
+                    rounded-full border-gray-500 mr-2"
+                    >
+                        <ChevronLeft size={16} className="motion-preset-slide-right"/>
+                    </div>
+                }
                 <Home size={20} className="motion-preset-slide-right"/>
-                <span>{">"}</span>
+                <ChevronRight size={20} className="motion-preset-slide-right"/>
                 {breadcrumbItems?.map(({label, href}, index) => (
                     <Fragment key={href}>
                         <Link href={href} className="motion-preset-slide-right">
                             {label}
                         </Link>
-                        {(index + 1 !== breadcrumbItems.length) &&
-                            <span className="motion-preset-slide-right">{">"}</span>}
+                        {
+                            (index + 1 !== breadcrumbItems.length) &&
+                            <ChevronRight size={20} className="motion-preset-slide-right"/>
+                        }
                     </Fragment>
                 ))}</div>
 

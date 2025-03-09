@@ -1,7 +1,29 @@
-import type { NextConfig } from "next";
+import type {NextConfig} from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+    /* config options here */
+    images: {
+        remotePatterns: [
+            {
+                protocol: 'https',
+                hostname: 'randomuser.me',
+                port: '',
+                pathname: '/api/portraits/**',
+            },
+            {
+                protocol: 'https',
+                hostname: 'i.pravatar.cc',
+                port: '',
+                pathname: '/**', // Allow all paths
+            },
+            {
+                protocol: 'https',
+                hostname: 'robohash.org',
+                port: '',
+                pathname: '/**', // Allow all paths
+            },
+        ],
+    }
 };
 
 export default nextConfig;

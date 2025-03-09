@@ -1,11 +1,11 @@
 import React from 'react';
 
-const Page = () => {
+const Enroll = () => {
     return (
         <div>
-            All Riders
+
         </div>
     );
 };
 
-export default Page;
+export default Enroll;
