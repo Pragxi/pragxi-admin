@@ -13,20 +13,22 @@ import {
     SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import Image from "next/image";
-import {Menu, User, UserPlus} from "lucide-react";
+import {ChevronDown, Menu, User, UserPlus} from "lucide-react";
 import {cn} from "@/lib/utils";
 import Link from "next/link";
 import {IdentificationBadge, MoneyWavy, Motorcycle, PresentationChart, ReadCvLogo} from "@phosphor-icons/react";
 import AuthenticatedAvatar from "@/components/auth/authenticated-avatar";
+import {useState} from "react";
+import {usePathname} from "next/navigation";
 
 const menuItems = [
     {title: "Dashboard", url: "/dashboard", icon: PresentationChart},
     {
         title: "Riders",
         icon: Motorcycle,
-        url: "/riders/all",
+        url: "/riders",
         submenu: [
-            {title: "All Riders", url: "/riders/all", icon: User},
+            {title: "All Riders", url: "/riders", icon: User},
             {title: "Enroll Rider", url: "/riders/enroll", icon: UserPlus},
         ],
     },
@@ -37,10 +39,21 @@ const menuItems = [
 ];
 
 export function AppSidebar({collapsed, setCollapsed}: { collapsed: boolean; setCollapsed: (val: boolean) => void }) {
+    const [openSubmenus, setOpenSubmenus] = useState(new Set());
+    const pathname = usePathname();
+
+    const toggleSubmenu = (title: string) => {
+        setOpenSubmenus(prev => {
+            const newSet = new Set(prev);
+            // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+            newSet.has(title) ? newSet.delete(title) : newSet.add(title);
+            return newSet;
+        });
+    };
+
     return (
         <Sidebar
             className={cn("transition-all duration-300 h-screen fixed px-2 bg-sidebar", collapsed ? "w-16" : "w-64")}>
-            {/* Sidebar Header */}
             <SidebarHeader>
                 <div className={`flex ${collapsed && "flex-col"} items-center justify-between p-2`}>
                     {!collapsed && (
@@ -63,7 +76,6 @@ export function AppSidebar({collapsed, setCollapsed}: { collapsed: boolean; setC
                 </div>
             </SidebarHeader>
 
-            {/* Sidebar Content */}
             <SidebarContent>
                 <SidebarGroup>
                     <SidebarGroupLabel className={cn("transition-opacity", collapsed ? "opacity-0" : "opacity-100")}>
@@ -71,50 +83,90 @@ export function AppSidebar({collapsed, setCollapsed}: { collapsed: boolean; setC
                     </SidebarGroupLabel>
                     <SidebarGroupContent>
                         <SidebarMenu>
-                            {menuItems.map((item) => (
-                                <SidebarMenuItem key={item.title}>
-                                    <SidebarMenuButton
-                                        asChild
-                                        className="flex items-center gap-2 hover:bg-[#FF9F0E] hover:text-white
-                                        transition-all duration-300 p-2 rounded-md"
-                                    >
-
-                                        <Link href={item.url || "#"} className="flex items-center gap-2">
-                                            <item.icon className="w-8 h-8"/>
-                                            {!collapsed && <span>{item.title}</span>}
-                                        </Link>
-
-                                    </SidebarMenuButton>
-
-                                    {/* Render submenus if available */}
-                                    {item.submenu && !collapsed && (
-                                        <SidebarMenu className="ml-4">
-                                            {item.submenu.map((sub) => (
-                                                <SidebarMenuItem key={sub.title}>
-                                                    <SidebarMenuButton
-                                                        asChild
-                                                        className="hover:bg-[#FF9F0E] hover:text-white
-                                                        transition-all duration-300 p-2 rounded-md">
-                                                        <Link href={sub.url} title={item.title}
-                                                              className="flex items-center gap-2">
-                                                            <sub.icon size="32"/>
-                                                            <span>{sub.title}</span>
-                                                        </Link>
-                                                    </SidebarMenuButton>
-                                                </SidebarMenuItem>
-                                            ))}
-                                        </SidebarMenu>
-                                    )}
-                                </SidebarMenuItem>
-                            ))}
+                            {menuItems.map((item) => {
+                                const isParentActive = item.url && pathname.startsWith(item.url);
+                                return (
+                                    <SidebarMenuItem key={item.title}>
+                                        {item.submenu ? (
+                                            <>
+                                                <SidebarMenuButton
+                                                    onClick={() => toggleSubmenu(item.title)}
+                                                    className={cn(
+                                                        "flex items-center gap-2 hover:bg-[#FF9F0E] hover:text-white transition-all duration-300 p-2 rounded-md w-full",
+                                                        isParentActive && "bg-[#FF9F0E] text-white"
+                                                    )}
+                                                >
+                                                    <Link href={item.url}>
+                                                        <item.icon/>
+                                                    </Link>
+                                                    {!collapsed && <span className="flex-1">{item.title}</span>}
+                                                    {!collapsed && (
+                                                        <ChevronDown
+                                                            className={`ml-auto transition-transform ${openSubmenus.has(item.title) ? "rotate-180" : ""}`}
+                                                        />
+                                                    )}
+                                                </SidebarMenuButton>
+                                                {openSubmenus.has(item.title) && !collapsed && (
+                                                    <div className="ml-3 overflow-hidden">
+                                                        <SidebarMenu
+                                                            className="w-full"
+                                                            style={{width: 'calc(100% - 0.30rem)'}}
+                                                        >
+                                                            {item.submenu.map((sub, index) => {
+                                                                const isSubActive = pathname === sub.url;
+                                                                return (
+                                                                    <SidebarMenuItem key={sub.title}
+                                                                                     className={cn(index === 0 && "mt-1")}>
+                                                                        <SidebarMenuButton
+                                                                            asChild
+                                                                            className={cn(
+                                                                                "hover:bg-[#FF9F0E] hover:text-white transition-all duration-300 p-2 rounded-md w-full",
+                                                                                isSubActive && "bg-[#FF9F0E] text-white"
+                                                                            )}
+                                                                        >
+                                                                            <Link href={sub.url}
+                                                                                  className="flex items-center gap-2 w-full">
+                                                                                <sub.icon size="32"/>
+                                                                                <span
+                                                                                    className="truncate">{sub.title}</span>
+                                                                            </Link>
+                                                                        </SidebarMenuButton>
+                                                                    </SidebarMenuItem>
+                                                                );
+                                                            })}
+                                                        </SidebarMenu>
+                                                    </div>
+                                                )}
+                                            </>
+                                        ) : (
+                                            <SidebarMenuButton
+                                                asChild
+                                                className={cn(
+                                                    "flex items-center gap-2 hover:bg-[#FF9F0E] hover:text-white transition-all duration-300 p-2 rounded-md w-full",
+                                                    pathname === item.url && "bg-[#FF9F0E] text-white"
+                                                )}
+                                            >
+                                                <Link href={item.url || "#"} className="flex items-center gap-2 w-full">
+                                                    <item.icon className="w-8 h-8"/>
+                                                    {!collapsed && <span className="truncate">{item.title}</span>}
+                                                </Link>
+                                            </SidebarMenuButton>
+                                        )}
+                                    </SidebarMenuItem>
+                                );
+                            })}
                         </SidebarMenu>
                     </SidebarGroupContent>
                 </SidebarGroup>
             </SidebarContent>
             <SidebarFooter className="w-full">
-                <div className="flex w-full">
-                    <AuthenticatedAvatar collapsed={collapsed}/>
-                </div>
+                <SidebarMenu>
+                    <SidebarMenuItem>
+                        <div className="flex w-full">
+                            <AuthenticatedAvatar collapsed={collapsed}/>
+                        </div>
+                    </SidebarMenuItem>
+                </SidebarMenu>
             </SidebarFooter>
         </Sidebar>
     );
