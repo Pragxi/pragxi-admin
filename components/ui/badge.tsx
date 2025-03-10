@@ -18,7 +18,7 @@ const badgeVariants = cva(
         outline:
           "text-foreground [a&]:hover:bg-accent [a&]:hover:text-accent-foreground",
           outline_success: "border-green-600 bg-green-300/10 text-green-700",
-          outline_destructive: "border-destructive bg-destructive/5 text-red-700",
+          outline_destructive: "border-destructive bg-destructive/10 text-red-700",
       },
     },
     defaultVariants: {
