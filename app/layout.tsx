@@ -3,6 +3,7 @@ import {Poppins} from "next/font/google";
 import "./globals.css";
 import {ReactNode} from "react";
 import {ThemeProvider} from "@/components/theme-provider";
+import {Toaster} from "react-hot-toast";
 
 const poppins = Poppins({
     subsets: ["latin"],
@@ -28,6 +29,7 @@ export default function RootLayout({children}: Readonly<{ children: ReactNode }>
             disableTransitionOnChange
         >
             {children}
+            <Toaster/>
         </ThemeProvider>
         </body>
         </html>

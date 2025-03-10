@@ -4,10 +4,9 @@ import {Input} from '@/components/ui/input';
 import {Button} from '@/components/ui/button';
 import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow,} from '@/components/ui/table';
 import {Badge} from '@/components/ui/badge';
-import {StarIcon} from 'lucide-react';
 import Image from 'next/image';
 import {generateRiders} from "@/dummy/riders";
-import {Eye, PencilSimpleLine, Trash} from '@phosphor-icons/react/dist/ssr';
+import {Trash} from '@phosphor-icons/react/dist/ssr';
 import {
     Pagination,
     PaginationContent,
@@ -16,17 +15,28 @@ import {
     PaginationNext,
     PaginationPrevious
 } from '@/components/ui/pagination';
+import {Tooltip, TooltipContent, TooltipProvider, TooltipTrigger,} from "@/components/ui/tooltip"
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from '@/components/ui/select';
-import {Star} from "@phosphor-icons/react";
+import {Eye, Star} from "@phosphor-icons/react";
+import {
+    Dialog, DialogClose,
+    DialogContent,
+    DialogDescription, DialogFooter,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from "@/components/ui/dialog"
+import {DialogBody} from "next/dist/client/components/react-dev-overlay/ui/components/dialog";
+import toast from "react-hot-toast";
 
 // Dummy data
-const riders = generateRiders(85);
+const riders = generateRiders(27);
 
 const Riders = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [sortConfig, setSortConfig] = useState({key: '', direction: ''});
     const [currentPage, setCurrentPage] = useState(1);
-    const [itemsPerPage, setItemsPerPage] = useState(10);
+    const [itemsPerPage, setItemsPerPage] = useState(Number(localStorage.getItem('riders-itemsPerPage')) || 10);
 
     // Search filter
     const filteredData = useMemo(() => {
@@ -62,24 +72,55 @@ const Riders = () => {
         setSortConfig({key, direction});
     };
 
+    const handleSetItemsPerPage = (value: number) => {
+        localStorage.setItem('riders-itemsPerPage', value.toString());
+        setItemsPerPage(value);
+    }
+
+    // Function to delete a rider with a simulated API call (success or failure randomly simulated)
+    const deleteRider = () => {
+        return new Promise((resolve, reject) => {
+            setTimeout(() => {
+                // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+                Math.random() > 0.5 ? reject("Deletion failed") : resolve("Rider deleted");
+            }, 1000);
+        });
+    }
+
+    const handleDelete = async () => {
+        await toast.promise(
+            deleteRider(),
+            {
+                loading: 'Deleting...',
+                success: 'Rider deleted!',
+                error: 'Failed to delete rider',
+            }
+        )
+    }
+
     return (
         <div className="flex flex-col w-full space-y-6">
+            {/* Title Row */}
             <div className="flex justify-between items-center">
                 <h1 className="text-2xl font-bold motion-preset-blur-right">All Riders</h1>
-                <Button className="motion-preset-blur-left">Add Rider</Button>
+                <Button className="motion-preset-blur-left text-white">Add Rider</Button>
             </div>
 
+            {/* Search Row */}
             <div className="flex items-center justify-between py-4">
+                {/* Search Bar */}
                 <Input
                     placeholder="Search riders..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="max-w-sm motion-preset-blur-right delay-75"
                 />
+
+                {/* Items Per Row */}
                 <Select
                     value={itemsPerPage.toString()}
                     onValueChange={(value) => {
-                        setItemsPerPage(Number(value))
+                        handleSetItemsPerPage(Number(value))
                         if (currentPage === 1) {
                             setCurrentPage(2);
                             setTimeout(() => {
@@ -103,6 +144,7 @@ const Riders = () => {
                 </Select>
             </div>
 
+            {/* Riders Table */}
             <Table className="motion-preset-blur-up" suppressHydrationWarning>
                 <TableHeader>
                     <TableRow className="bg-gray-100 dark:bg-zinc-800 cursor-pointer rounded-2xl">
@@ -146,7 +188,9 @@ const Riders = () => {
                                     <Star
                                         weight="fill"
                                         key={i}
-                                        className={i < Math.floor(rider.rating) ? 'text-yellow-500 inline-block' : 'text-gray-300 inline-block'}
+                                        className={i < Math.floor(rider.rating) ?
+                                            'text-yellow-500 inline-block' :
+                                            'text-gray-300 inline-block'}
                                         size={16}
                                     />
                                 ))}
@@ -159,15 +203,74 @@ const Riders = () => {
                                     {rider.status}
                                 </Badge>
                             </TableCell>
-                            <TableCell>${rider.amountEarned}</TableCell>
+                            <TableCell>GH¢{rider.amountEarned}</TableCell>
                             <TableCell>
                                 <div className="flex gap-2">
-                                    <Button variant="outline" size="icon" className="rounded-full">
-                                        <PencilSimpleLine size={32} weight="duotone"/>
-                                    </Button>
-                                    <Button variant="destructive" size="icon" className="rounded-full">
-                                        <Trash size={32} className="" weight="duotone"/>
-                                    </Button>
+                                    <TooltipProvider>
+                                        {/* View Rider Button */}
+                                        <Tooltip>
+                                            <Button variant="ghost" size="icon" className="rounded-full">
+
+                                                <TooltipTrigger>
+                                                    <Eye size={32} weight="duotone"/>
+                                                </TooltipTrigger>
+                                                <TooltipContent>
+                                                    View
+                                                </TooltipContent>
+
+                                            </Button>
+                                        </Tooltip>
+                                    </TooltipProvider>
+
+                                    <TooltipProvider>
+                                        {/* Delete Rider Dialog Trigger */}
+                                        <Dialog>
+                                            <DialogTrigger>
+                                                {/* Delete Rider Button */}
+                                                <Tooltip>
+                                                    <Button variant="ghost" size="icon" className="rounded-full">
+                                                        <TooltipTrigger>
+                                                            <Trash size={32} className="" weight="duotone"/>
+                                                        </TooltipTrigger>
+                                                        <TooltipContent>
+                                                            Delete
+                                                        </TooltipContent>
+                                                    </Button>
+                                                </Tooltip>
+                                            </DialogTrigger>
+
+                                            <DialogContent>
+                                                <DialogHeader>
+                                                    <DialogTitle>Are you absolutely sure?</DialogTitle>
+
+                                                </DialogHeader>
+                                                <DialogBody>
+                                                    <DialogDescription>
+                                                        You&#39;re trying to delete a rider&#39;s account.
+                                                        <p>
+                                                            This will delete the
+                                                            rider and disable the rider&#39;s account.
+                                                        </p>
+                                                    </DialogDescription>
+                                                </DialogBody>
+                                                <DialogFooter>
+                                                    <div className="flex gap-2">
+                                                        <DialogClose>
+                                                            <Button variant="ghost">Close</Button>
+                                                        </DialogClose>
+                                                        <DialogClose>
+                                                            <Button
+                                                                variant="destructive"
+                                                                onClick={handleDelete}>
+                                                                Delete
+                                                            </Button>
+                                                        </DialogClose>
+                                                    </div>
+                                                </DialogFooter>
+                                            </DialogContent>
+                                        </Dialog>
+
+                                    </TooltipProvider>
                                 </div>
                             </TableCell>
                         </TableRow>
@@ -175,6 +278,7 @@ const Riders = () => {
                 </TableBody>
             </Table>
 
+            {/* Pagination Row */}
             <Pagination>
                 <PaginationContent>
                     <PaginationItem className='cursor-pointer'>
@@ -193,8 +297,24 @@ const Riders = () => {
                             isActive={currentPage > 1}
                         />
                     </PaginationItem>
-                    <PaginationItem className='cursor-pointer'>
-                        <PaginationLink isActive>{currentPage}</PaginationLink>
+                    <PaginationItem className='cursor-pointer flex gap-1'>
+                        {currentPage > 2 && (
+                            <PaginationLink isActive className='border-0'
+                                            onClick={() => setCurrentPage(currentPage - 2)}>{currentPage - 2}</PaginationLink>
+                        )}
+                        {currentPage > 1 && (
+                            <PaginationLink isActive className='border-0'
+                                            onClick={() => setCurrentPage(currentPage - 1)}>{currentPage - 1}</PaginationLink>
+                        )}
+                        <PaginationLink isActive className='border-0'>{currentPage}</PaginationLink>
+                        {currentPage < Math.ceil(sortedData.length / itemsPerPage) && (
+                            <PaginationLink isActive className='border-0'
+                                            onClick={() => setCurrentPage(currentPage + 1)}>{currentPage + 1}</PaginationLink>
+                        )}
+                        {currentPage < Math.ceil(sortedData.length / itemsPerPage) - 1 && (
+                            <PaginationLink isActive className='border-0'
+                                            onClick={() => setCurrentPage(currentPage + 2)}>{currentPage + 2}</PaginationLink>
+                        )}
                     </PaginationItem>
                     <PaginationItem className='cursor-pointer'>
                         <PaginationNext
