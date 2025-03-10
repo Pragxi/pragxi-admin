@@ -87,14 +87,15 @@ const Riders = () => {
         });
     }
 
-
     const handleDelete = async () => {
         await toast.promise(
-            deleteRider(), {
+            deleteRider(),
+            {
                 loading: 'Deleting...',
                 success: 'Rider deleted!',
                 error: 'Failed to delete rider',
-            })
+            }
+        )
     }
 
     return (
