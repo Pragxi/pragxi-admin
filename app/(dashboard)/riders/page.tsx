@@ -82,7 +82,7 @@ const Riders = () => {
         return new Promise((resolve, reject) => {
             setTimeout(() => {
                 // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-                Math.random() > 0.5 ? resolve("Rider deleted") : reject("Deletion failed");
+                Math.random() > 0.5 ? reject("Deletion failed") : resolve("Rider deleted");
             }, 1000);
         });
     }
@@ -207,31 +207,35 @@ const Riders = () => {
                                 <div className="flex gap-2">
                                     <TooltipProvider>
                                         {/* View Rider Button */}
-                                        <Button variant="ghost" size="icon" className="rounded-full">
-                                            <Tooltip>
+                                        <Tooltip>
+                                            <Button variant="ghost" size="icon" className="rounded-full">
+
                                                 <TooltipTrigger>
                                                     <Eye size={32} weight="duotone"/>
                                                 </TooltipTrigger>
                                                 <TooltipContent>
                                                     View
                                                 </TooltipContent>
-                                            </Tooltip>
-                                        </Button>
 
-                                        {/* Delete Rider Trigger */}
+                                            </Button>
+                                        </Tooltip>
+                                    </TooltipProvider>
+
+                                    <TooltipProvider>
+                                        {/* Delete Rider Dialog Trigger */}
                                         <Dialog>
                                             <DialogTrigger>
                                                 {/* Delete Rider Button */}
-                                                <Button variant="ghost" size="icon" className="rounded-full">
-                                                    <Tooltip>
+                                                <Tooltip>
+                                                    <Button variant="ghost" size="icon" className="rounded-full">
                                                         <TooltipTrigger>
                                                             <Trash size={32} className="" weight="duotone"/>
                                                         </TooltipTrigger>
                                                         <TooltipContent>
                                                             Delete
                                                         </TooltipContent>
-                                                    </Tooltip>
-                                                </Button>
+                                                    </Button>
+                                                </Tooltip>
                                             </DialogTrigger>
 
                                             <DialogContent>
