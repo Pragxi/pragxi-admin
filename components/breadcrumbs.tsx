@@ -7,7 +7,6 @@ import {ThemeToggle} from "@/components/theme-toggle";
 const Breadcrumbs = () => {
     const pathname = usePathname();
 
-    console.log({pathname})
     // Generate breadcrumb items
     const breadcrumbItems = pathname
         .split("/")
@@ -42,7 +41,8 @@ const Breadcrumbs = () => {
                             <ChevronRight size={20} className="motion-preset-slide-right"/>
                         }
                     </Fragment>
-                ))}</div>
+                ))}
+            </div>
 
             <div className="motion-preset-blur-left-lg">
                 <ThemeToggle/>

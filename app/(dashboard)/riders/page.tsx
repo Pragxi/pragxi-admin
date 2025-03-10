@@ -7,7 +7,7 @@ import {Badge} from '@/components/ui/badge';
 import {StarIcon} from 'lucide-react';
 import Image from 'next/image';
 import {generateRiders} from "@/dummy/riders";
-import {PencilSimpleLine, Trash} from '@phosphor-icons/react/dist/ssr';
+import {Eye, PencilSimpleLine, Trash} from '@phosphor-icons/react/dist/ssr';
 import {
     Pagination,
     PaginationContent,
@@ -17,6 +17,7 @@ import {
     PaginationPrevious
 } from '@/components/ui/pagination';
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from '@/components/ui/select';
+import {Star} from "@phosphor-icons/react";
 
 // Dummy data
 const riders = generateRiders(85);
@@ -54,7 +55,7 @@ const Riders = () => {
     const paginatedData = useMemo(() => {
         const startIndex = (currentPage - 1) * itemsPerPage;
         return sortedData.slice(startIndex, startIndex + itemsPerPage);
-    }, [sortedData, currentPage]);
+    }, [currentPage, itemsPerPage, sortedData]);
 
     const handleSort = (key: string) => {
         const direction = sortConfig.key === key && sortConfig.direction === 'asc' ? 'desc' : 'asc';
@@ -80,7 +81,10 @@ const Riders = () => {
                     onValueChange={(value) => {
                         setItemsPerPage(Number(value))
                         if (currentPage === 1) {
-                            setCurrentPage(2)
+                            setCurrentPage(2);
+                            setTimeout(() => {
+                                setCurrentPage(1);
+                            }, 0)
                         } else {
                             setCurrentPage(1)
                         }
@@ -99,8 +103,8 @@ const Riders = () => {
                 </Select>
             </div>
 
-            <Table suppressHydrationWarning>
-                <TableHeader >
+            <Table className="motion-preset-blur-up" suppressHydrationWarning>
+                <TableHeader>
                     <TableRow className="bg-gray-100 dark:bg-zinc-800 cursor-pointer rounded-2xl">
                         <TableHead>Avatar</TableHead>
                         <TableHead onClick={() => handleSort('name')}>
@@ -139,7 +143,8 @@ const Riders = () => {
                             <TableCell>{rider.vehicleNumber}</TableCell>
                             <TableCell>
                                 {Array.from({length: 5}, (_, i) => (
-                                    <StarIcon
+                                    <Star
+                                        weight="fill"
                                         key={i}
                                         className={i < Math.floor(rider.rating) ? 'text-yellow-500 inline-block' : 'text-gray-300 inline-block'}
                                         size={16}
