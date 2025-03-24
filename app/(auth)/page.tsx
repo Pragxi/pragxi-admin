@@ -10,7 +10,7 @@ export default function Home() {
     const router = useTransitionRouter();
 
     return (
-        <div className="grid grid-cols-2 gap-4 h-[80dvh]">
+        <div className="grid grid-cols-2 gap-4">
             <div className="flex justify-center flex-col items-center">
                 <div className="flex items-center gap-4 p-6">
                     <div className="shadow-md rounded-lg">
@@ -46,7 +46,7 @@ export default function Home() {
                     alt="logo"
                     height={1000}
                     width={1000}
-                    className="h-full w-full object-cover"
+                    className="h-screen w-full object-cover"
                 />
             </div>
         </div>
