@@ -1,13 +1,13 @@
 "use client";
 
 import Image from "next/image";
-import {useRouter} from "next/navigation";
+import {useTransitionRouter} from 'next-view-transitions';
 import {Input} from "@/components/ui/input";
 import {Button} from "@/components/ui/button";
 import {Label} from "@/components/ui/label";
 
 export default function Home() {
-    const router = useRouter();
+    const router = useTransitionRouter();
 
     return (
         <div className="grid grid-cols-2 gap-4 h-[80dvh]">

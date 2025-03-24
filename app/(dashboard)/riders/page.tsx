@@ -1,5 +1,5 @@
 "use client";
-import {useMemo, useState} from 'react';
+import {useEffect, useMemo, useState} from 'react';
 import {Input} from '@/components/ui/input';
 import {Button} from '@/components/ui/button';
 import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow,} from '@/components/ui/table';
@@ -19,15 +19,18 @@ import {Tooltip, TooltipContent, TooltipProvider, TooltipTrigger,} from "@/compo
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from '@/components/ui/select';
 import {Eye, Star} from "@phosphor-icons/react";
 import {
-    Dialog, DialogClose,
+    Dialog,
+    DialogClose,
     DialogContent,
-    DialogDescription, DialogFooter,
+    DialogDescription,
+    DialogFooter,
     DialogHeader,
     DialogTitle,
     DialogTrigger,
 } from "@/components/ui/dialog"
 import {DialogBody} from "next/dist/client/components/react-dev-overlay/ui/components/dialog";
 import toast from "react-hot-toast";
+import {redirect} from "next/navigation";
 
 // Dummy data
 const riders = generateRiders(27);
@@ -36,7 +39,7 @@ const Riders = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [sortConfig, setSortConfig] = useState({key: '', direction: ''});
     const [currentPage, setCurrentPage] = useState(1);
-    const [itemsPerPage, setItemsPerPage] = useState(Number(localStorage.getItem('riders-itemsPerPage')) || 10);
+    const [itemsPerPage, setItemsPerPage] = useState(10);
 
     // Search filter
     const filteredData = useMemo(() => {
@@ -60,6 +63,13 @@ const Riders = () => {
             return 0;
         });
     }, [filteredData, sortConfig]);
+
+    useEffect(() => {
+        const storedItemsPerPage = localStorage.getItem('riders-itemsPerPage');
+        if (storedItemsPerPage) {
+            setItemsPerPage(Number(storedItemsPerPage));
+        }
+    }, [])
 
     // Pagination
     const paginatedData = useMemo(() => {
@@ -209,16 +219,19 @@ const Riders = () => {
                                     <TooltipProvider>
                                         {/* View Rider Button */}
                                         <Tooltip>
-                                            <Button variant="ghost" size="icon" className="rounded-full">
-
-                                                <TooltipTrigger>
+                                            <TooltipTrigger>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="rounded-full"
+                                                    onClick={() => redirect(`/riders/profile/${rider.id}`)}
+                                                >
                                                     <Eye size={32} weight="duotone"/>
-                                                </TooltipTrigger>
-                                                <TooltipContent>
-                                                    View
-                                                </TooltipContent>
-
-                                            </Button>
+                                                </Button>
+                                            </TooltipTrigger>
+                                            <TooltipContent>
+                                                View
+                                            </TooltipContent>
                                         </Tooltip>
                                     </TooltipProvider>
 
@@ -228,21 +241,20 @@ const Riders = () => {
                                             <DialogTrigger>
                                                 {/* Delete Rider Button */}
                                                 <Tooltip>
-                                                    <Button variant="ghost" size="icon" className="rounded-full">
-                                                        <TooltipTrigger>
+                                                    <TooltipTrigger>
+                                                        <Button variant="ghost" size="icon" className="rounded-full">
                                                             <Trash size={32} className="" weight="duotone"/>
-                                                        </TooltipTrigger>
+                                                        </Button>
                                                         <TooltipContent>
                                                             Delete
                                                         </TooltipContent>
-                                                    </Button>
+                                                    </TooltipTrigger>
                                                 </Tooltip>
                                             </DialogTrigger>
 
                                             <DialogContent>
                                                 <DialogHeader>
                                                     <DialogTitle>Are you absolutely sure?</DialogTitle>
-
                                                 </DialogHeader>
                                                 <DialogBody>
                                                     <DialogDescription>
@@ -336,6 +348,7 @@ const Riders = () => {
                     </PaginationItem>
                 </PaginationContent>
             </Pagination>
+
         </div>
     );
 };

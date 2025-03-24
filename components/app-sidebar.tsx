@@ -15,7 +15,7 @@ import {
 import Image from "next/image";
 import {ChevronDown, Menu, User, UserPlus} from "lucide-react";
 import {cn} from "@/lib/utils";
-import Link from "next/link";
+import {Link} from 'next-view-transitions';
 import {IdentificationBadge, MoneyWavy, Motorcycle, PresentationChart, ReadCvLogo} from "@phosphor-icons/react";
 import AuthenticatedAvatar from "@/components/auth/authenticated-avatar";
 import {useState} from "react";
