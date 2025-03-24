@@ -4,6 +4,7 @@ import "./globals.css";
 import {ReactNode} from "react";
 import {ThemeProvider} from "@/components/theme-provider";
 import {Toaster} from "react-hot-toast";
+import {ViewTransitions} from 'next-view-transitions'
 
 const poppins = Poppins({
     subsets: ["latin"],
@@ -18,20 +19,22 @@ export const metadata: Metadata = {
 
 export default function RootLayout({children}: Readonly<{ children: ReactNode }>) {
     return (
-        <html lang="en" suppressHydrationWarning>
-        <body
-            className={`${poppins.className} antialiased dark:bg-zinc-900`}
-        >
-        <ThemeProvider
-            attribute="class"
-            defaultTheme="system"
-            enableSystem
-            disableTransitionOnChange
-        >
-            {children}
-            <Toaster/>
-        </ThemeProvider>
-        </body>
-        </html>
+        <ViewTransitions>
+            <html lang="en" suppressHydrationWarning>
+            <body
+                className={`${poppins.className} antialiased dark:bg-zinc-900`}
+            >
+            <ThemeProvider
+                attribute="class"
+                defaultTheme="system"
+                enableSystem
+                disableTransitionOnChange
+            >
+                {children}
+                <Toaster/>
+            </ThemeProvider>
+            </body>
+            </html>
+        </ViewTransitions>
     );
 }
