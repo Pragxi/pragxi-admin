@@ -24,7 +24,6 @@ const EnrollRider = () => {
             </div>
             <hr/>
 
-            {/* tabs for profile */}
             <Tabs defaultValue="personal_information">
                 <TabsList className="bg-transparent flex gap-2">
                     <TabsTrigger

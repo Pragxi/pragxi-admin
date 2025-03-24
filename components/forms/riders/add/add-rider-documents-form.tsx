@@ -11,6 +11,7 @@ import {FileInput, FileUploader, FileUploaderContent, FileUploaderItem} from "@/
 
 const formSchema = z.object({
     id_card: z.string(),
+    profile_picture: z.string(),
     drivers_license: z.string(),
     insurance: z.string()
 });
@@ -20,12 +21,20 @@ const AddRiderDocumentsForm = () => {
     const [idCardFiles, setIdCardFiles] = useState<File[] | null>(null);
     const [driversLicenseFiles, setDriversLicenseFiles] = useState<File[] | null>(null);
     const [insuranceFiles, setInsuranceFiles] = useState<File[] | null>(null);
+    const [profilePicture, setProfilePicture] = useState<File[] | null>(null);
 
     const dropZoneConfig = {
         maxFiles: 5,
         maxSize: 1024 * 1024 * 4,
         multiple: true,
     };
+
+    const profileDropZoneConfig = {
+        maxFiles: 1,
+        maxSize: 1024 * 1024 * 4,
+        multiple: false,
+    };
+
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
     })
@@ -48,156 +57,204 @@ const AddRiderDocumentsForm = () => {
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)}
                   className="space-y-4 max-w-3xl my-3 motion-preset-blur-right delay-100">
-
-                <FormField
-                    control={form.control}
-                    name="id_card"
-                    render={({field}) => (
-                        <FormItem>
-                            <FormLabel>ID Card</FormLabel>
-                            <FormControl>
-                                <FileUploader
-                                    value={idCardFiles}
-                                    onValueChange={setIdCardFiles}
-                                    dropzoneOptions={dropZoneConfig}
-                                    className="relative bg-background rounded-lg p-2"
-                                >
-                                    <FileInput
-                                        id="fileInput"
-                                        className="outline-dashed outline-1 outline-slate-500"
+                <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                        control={form.control}
+                        name="id_card"
+                        render={({field}) => (
+                            <FormItem>
+                                <FormLabel>Profile Picture</FormLabel>
+                                <FormControl>
+                                    <FileUploader
+                                        value={profilePicture}
+                                        onValueChange={setProfilePicture}
+                                        dropzoneOptions={profileDropZoneConfig}
+                                        className="relative bg-background rounded-lg p-2"
                                     >
-                                        <div className="flex items-center justify-center flex-col p-8 w-full ">
-                                            <CloudUpload className='text-gray-500 w-10 h-10'/>
-                                            <p className="mb-1 text-sm text-gray-500 dark:text-gray-400">
-                                                <span className="font-semibold">Click to upload</span>
-                                                &nbsp; or drag and drop
-                                            </p>
-                                            <p className="text-xs text-gray-500 dark:text-gray-400">
-                                                SVG, PNG, JPG, PDF or GIF
-                                            </p>
+                                        <FileInput
+                                            id="fileInput"
+                                            className="outline-dashed outline-1 outline-slate-500 hover:outline-primary transition-all duration-300"
+                                        >
+                                            <div className="flex items-center justify-center flex-col p-8 w-full ">
+                                                <CloudUpload className='text-gray-500 w-10 h-10'/>
+                                                <p className="mb-1 text-sm text-gray-500 dark:text-gray-400">
+                                                    <span className="font-semibold">Click to upload</span>
+                                                    &nbsp; or drag and drop
+                                                </p>
+                                                <p className="text-xs text-gray-500 dark:text-gray-400">
+                                                    PNG, JPG
+                                                </p>
+                                            </div>
+                                        </FileInput>
+                                        <FileUploaderContent>
+                                            {profilePicture &&
+                                                profilePicture.length > 0 &&
+                                                profilePicture.map((file, i) => (
+                                                    <FileUploaderItem key={i} index={i}>
+                                                        <Paperclip className="h-4 w-4 stroke-current"/>
+                                                        <span>{file.name}</span>
+                                                    </FileUploaderItem>
+                                                ))}
+                                        </FileUploaderContent>
+                                    </FileUploader>
+                                </FormControl>
+                                <FormDescription>Select a file to upload.</FormDescription>
+                                <FormMessage/>
+                            </FormItem>
+                        )}
+                    />
 
-                                            <p className="text-xs text-gray-500 dark:text-gray-400">
-                                                you can add more than one document
-                                            </p>
-                                        </div>
-                                    </FileInput>
-                                    <FileUploaderContent>
-                                        {idCardFiles &&
-                                            idCardFiles.length > 0 &&
-                                            idCardFiles.map((file, i) => (
-                                                <FileUploaderItem key={i} index={i}>
-                                                    <Paperclip className="h-4 w-4 stroke-current"/>
-                                                    <span>{file.name}</span>
-                                                </FileUploaderItem>
-                                            ))}
-                                    </FileUploaderContent>
-                                </FileUploader>
-                            </FormControl>
-                            <FormDescription>Select a file to upload.</FormDescription>
-                            <FormMessage/>
-                        </FormItem>
-                    )}
-                />
-
-                <FormField
-                    control={form.control}
-                    name="drivers_license"
-                    render={({field}) => (
-                        <FormItem>
-                            <FormLabel>Driver&#39;s License</FormLabel>
-                            <FormControl>
-                                <FileUploader
-                                    value={driversLicenseFiles}
-                                    onValueChange={setDriversLicenseFiles}
-                                    dropzoneOptions={dropZoneConfig}
-                                    className="relative bg-background rounded-lg p-2"
-                                >
-                                    <FileInput
-                                        id="fileInput"
-                                        className="outline-dashed outline-1 outline-slate-500"
+                    <FormField
+                        control={form.control}
+                        name="id_card"
+                        render={({field}) => (
+                            <FormItem>
+                                <FormLabel>ID Card</FormLabel>
+                                <FormControl>
+                                    <FileUploader
+                                        value={idCardFiles}
+                                        onValueChange={setIdCardFiles}
+                                        dropzoneOptions={dropZoneConfig}
+                                        className="relative bg-background rounded-lg p-2"
                                     >
-                                        <div className="flex items-center justify-center flex-col p-8 w-full ">
-                                            <CloudUpload className='text-gray-500 w-10 h-10'/>
-                                            <p className="mb-1 text-sm text-gray-500 dark:text-gray-400">
-                                                <span className="font-semibold">Click to upload</span>
-                                                &nbsp; or drag and drop
-                                            </p>
-                                            <p className="text-xs text-gray-500 dark:text-gray-400">
-                                                SVG, PNG, JPG, PDF or GIF
-                                            </p>
+                                        <FileInput
+                                            id="fileInput"
+                                            className="outline-dashed outline-1 outline-slate-500 hover:outline-primary transition-all duration-300"
+                                        >
+                                            <div className="flex items-center justify-center flex-col p-8 w-full ">
+                                                <CloudUpload className='text-gray-500 w-10 h-10'/>
+                                                <p className="mb-1 text-sm text-gray-500 dark:text-gray-400">
+                                                    <span className="font-semibold">Click to upload</span>
+                                                    &nbsp; or drag and drop
+                                                </p>
+                                                <p className="text-xs text-gray-500 dark:text-gray-400">
+                                                    SVG, PNG, JPG, PDF or GIF
+                                                </p>
 
-                                            <p className="text-xs text-gray-500 dark:text-gray-400">
-                                                you can add more than one document
-                                            </p>
-                                        </div>
-                                    </FileInput>
-                                    <FileUploaderContent>
-                                        {driversLicenseFiles &&
-                                            driversLicenseFiles.length > 0 &&
-                                            driversLicenseFiles.map((file, i) => (
-                                                <FileUploaderItem key={i} index={i}>
-                                                    <Paperclip className="h-4 w-4 stroke-current"/>
-                                                    <span>{file.name}</span>
-                                                </FileUploaderItem>
-                                            ))}
-                                    </FileUploaderContent>
-                                </FileUploader>
-                            </FormControl>
-                            <FormDescription>Select a file to upload.</FormDescription>
-                            <FormMessage/>
-                        </FormItem>
-                    )}
-                />
-
-                <FormField
-                    control={form.control}
-                    name="insurance"
-                    render={({field}) => (
-                        <FormItem>
-                            <FormLabel>Insurance</FormLabel>
-                            <FormControl>
-                                <FileUploader
-                                    value={insuranceFiles}
-                                    onValueChange={setInsuranceFiles}
-                                    dropzoneOptions={dropZoneConfig}
-                                    className="relative bg-background rounded-lg p-2"
-                                >
-                                    <FileInput
-                                        id="fileInput"
-                                        className="outline-dashed outline-1 outline-slate-500"
+                                                <p className="text-xs text-gray-500 dark:text-gray-400">
+                                                    you can add more than one document
+                                                </p>
+                                            </div>
+                                        </FileInput>
+                                        <FileUploaderContent>
+                                            {idCardFiles &&
+                                                idCardFiles.length > 0 &&
+                                                idCardFiles.map((file, i) => (
+                                                    <FileUploaderItem key={i} index={i}>
+                                                        <Paperclip className="h-4 w-4 stroke-current"/>
+                                                        <span>{file.name}</span>
+                                                    </FileUploaderItem>
+                                                ))}
+                                        </FileUploaderContent>
+                                    </FileUploader>
+                                </FormControl>
+                                <FormDescription>Select a file to upload.</FormDescription>
+                                <FormMessage/>
+                            </FormItem>
+                        )}
+                    />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                        control={form.control}
+                        name="drivers_license"
+                        render={({field}) => (
+                            <FormItem>
+                                <FormLabel>Driver&#39;s License</FormLabel>
+                                <FormControl>
+                                    <FileUploader
+                                        value={driversLicenseFiles}
+                                        onValueChange={setDriversLicenseFiles}
+                                        dropzoneOptions={dropZoneConfig}
+                                        className="relative bg-background rounded-lg p-2"
                                     >
-                                        <div className="flex items-center justify-center flex-col p-8 w-full ">
-                                            <CloudUpload className='text-gray-500 w-10 h-10'/>
-                                            <p className="mb-1 text-sm text-gray-500 dark:text-gray-400">
-                                                <span className="font-semibold">Click to upload</span>
-                                                &nbsp; or drag and drop
-                                            </p>
-                                            <p className="text-xs text-gray-500 dark:text-gray-400">
-                                                SVG, PNG, JPG, PDF or GIF
-                                            </p>
+                                        <FileInput
+                                            id="fileInput"
+                                            className="outline-dashed outline-1 outline-slate-500 hover:outline-primary transition-all duration-300"
+                                        >
+                                            <div className="flex items-center justify-center flex-col p-8 w-full ">
+                                                <CloudUpload className='text-gray-500 w-10 h-10'/>
+                                                <p className="mb-1 text-sm text-gray-500 dark:text-gray-400">
+                                                    <span className="font-semibold">Click to upload</span>
+                                                    &nbsp; or drag and drop
+                                                </p>
+                                                <p className="text-xs text-gray-500 dark:text-gray-400">
+                                                    SVG, PNG, JPG, PDF or GIF
+                                                </p>
 
-                                            <p className="text-xs text-gray-500 dark:text-gray-400">
-                                                you can add more than one document
-                                            </p>
-                                        </div>
-                                    </FileInput>
-                                    <FileUploaderContent>
-                                        {insuranceFiles &&
-                                            insuranceFiles.length > 0 &&
-                                            insuranceFiles.map((file, i) => (
-                                                <FileUploaderItem key={i} index={i}>
-                                                    <Paperclip className="h-4 w-4 stroke-current"/>
-                                                    <span>{file.name}</span>
-                                                </FileUploaderItem>
-                                            ))}
-                                    </FileUploaderContent>
-                                </FileUploader>
-                            </FormControl>
-                            <FormDescription>Select a file to upload.</FormDescription>
-                            <FormMessage/>
-                        </FormItem>
-                    )}
-                />
+                                                <p className="text-xs text-gray-500 dark:text-gray-400">
+                                                    you can add more than one document
+                                                </p>
+                                            </div>
+                                        </FileInput>
+                                        <FileUploaderContent>
+                                            {driversLicenseFiles &&
+                                                driversLicenseFiles.length > 0 &&
+                                                driversLicenseFiles.map((file, i) => (
+                                                    <FileUploaderItem key={i} index={i}>
+                                                        <Paperclip className="h-4 w-4 stroke-current"/>
+                                                        <span>{file.name}</span>
+                                                    </FileUploaderItem>
+                                                ))}
+                                        </FileUploaderContent>
+                                    </FileUploader>
+                                </FormControl>
+                                <FormDescription>Select a file to upload.</FormDescription>
+                                <FormMessage/>
+                            </FormItem>
+                        )}
+                    />
+
+                    <FormField
+                        control={form.control}
+                        name="insurance"
+                        render={({field}) => (
+                            <FormItem>
+                                <FormLabel>Insurance</FormLabel>
+                                <FormControl>
+                                    <FileUploader
+                                        value={insuranceFiles}
+                                        onValueChange={setInsuranceFiles}
+                                        dropzoneOptions={dropZoneConfig}
+                                        className="relative bg-background rounded-lg p-2"
+                                    >
+                                        <FileInput
+                                            id="fileInput"
+                                            className="outline-dashed outline-1 outline-slate-500 hover:outline-primary transition-all duration-300"
+                                        >
+                                            <div className="flex items-center justify-center flex-col p-8 w-full ">
+                                                <CloudUpload className='text-gray-500 w-10 h-10'/>
+                                                <p className="mb-1 text-sm text-gray-500 dark:text-gray-400">
+                                                    <span className="font-semibold">Click to upload</span>
+                                                    &nbsp; or drag and drop
+                                                </p>
+                                                <p className="text-xs text-gray-500 dark:text-gray-400">
+                                                    SVG, PNG, JPG, PDF or GIF
+                                                </p>
+
+                                                <p className="text-xs text-gray-500 dark:text-gray-400">
+                                                    you can add more than one document
+                                                </p>
+                                            </div>
+                                        </FileInput>
+                                        <FileUploaderContent>
+                                            {insuranceFiles &&
+                                                insuranceFiles.length > 0 &&
+                                                insuranceFiles.map((file, i) => (
+                                                    <FileUploaderItem key={i} index={i}>
+                                                        <Paperclip className="h-4 w-4 stroke-current"/>
+                                                        <span>{file.name}</span>
+                                                    </FileUploaderItem>
+                                                ))}
+                                        </FileUploaderContent>
+                                    </FileUploader>
+                                </FormControl>
+                                <FormDescription>Select a file to upload.</FormDescription>
+                                <FormMessage/>
+                            </FormItem>
+                        )}
+                    />
+                </div>
                 <Button type="submit">Submit</Button>
             </form>
         </Form>
