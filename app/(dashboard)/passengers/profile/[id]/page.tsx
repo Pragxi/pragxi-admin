@@ -1,13 +1,15 @@
 "use client";
 
-import {useEffect, useMemo, useState} from 'react';
-import {Input} from '@/components/ui/input';
-import {Button} from '@/components/ui/button';
-import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow,} from '@/components/ui/table';
-import {Badge} from '@/components/ui/badge';
-import Image from 'next/image';
-import {generatePassengers} from "@/dummy/passengers";
-import {Trash} from '@phosphor-icons/react/dist/ssr';
+import React, {useEffect, useMemo, useState} from 'react';
+import {Input} from "@/components/ui/input";
+import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select";
+import {Button} from "@/components/ui/button";
+import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow} from "@/components/ui/table";
+import Image from "next/image";
+import {Eye, Star} from "@phosphor-icons/react";
+import {Badge} from "@/components/ui/badge";
+import {Tooltip, TooltipContent, TooltipProvider, TooltipTrigger} from "@/components/ui/tooltip";
+import {redirect} from "next/navigation";
 import {
     Pagination,
     PaginationContent,
@@ -15,29 +17,14 @@ import {
     PaginationLink,
     PaginationNext,
     PaginationPrevious
-} from '@/components/ui/pagination';
-import {Tooltip, TooltipContent, TooltipProvider, TooltipTrigger,} from "@/components/ui/tooltip"
-import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from '@/components/ui/select';
-import {Eye, Star} from "@phosphor-icons/react";
-import {
-    Dialog,
-    DialogClose,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger,
-} from "@/components/ui/dialog"
-import {DialogBody} from "next/dist/client/components/react-dev-overlay/ui/components/dialog";
-import toast from "react-hot-toast";
-import {redirect} from "next/navigation";
+} from "@/components/ui/pagination";
 import {Passenger} from "@/types/passenger";
+import {generatePassengers} from "@/dummy/passengers";
 
-// Dummy data
-const passengers = generatePassengers(27);
+const passengers = generatePassengers(50);
 
-const Passengers = () => {
+const PassengerProfile = () => {
+
     const [searchTerm, setSearchTerm] = useState('');
     const [sortConfig, setSortConfig] = useState({key: '', direction: ''});
     const [currentPage, setCurrentPage] = useState(1);
@@ -90,39 +77,18 @@ const Passengers = () => {
         setItemsPerPage(value);
     }
 
-    // Function to delete a rider with a simulated API call (success or failure randomly simulated)
-    const deletePassenger = () => {
-        return new Promise((resolve, reject) => {
-            setTimeout(() => {
-                // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-                Math.random() > 0.5 ? reject("Deletion failed") : resolve("Passenger deleted");
-            }, 1000);
-        });
-    }
-
-    const handleDelete = async () => {
-        await toast.promise(
-            deletePassenger(),
-            {
-                loading: 'Deleting...',
-                success: 'Passenger deleted!',
-                error: 'Failed to delete passenger',
-            }
-        )
-    }
-
     return (
-        <div className="flex flex-col w-full space-y-6">
+        <div className="flex flex-col w-full space-y-2">
             {/* Title Row */}
             <div className="flex justify-between items-center">
-                <h1 className="text-2xl font-bold motion-preset-blur-right">All Passengers</h1>
+                <h1 className="text-2xl font-bold motion-preset-blur-right">Ride History</h1>
             </div>
 
             {/* Search Row */}
             <div className="flex items-center justify-between py-4">
                 {/* Search Bar */}
                 <Input
-                    placeholder="Search passengers..."
+                    placeholder="Search ride history..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="max-w-sm motion-preset-blur-right delay-75"
@@ -233,7 +199,7 @@ const Passengers = () => {
                                                     variant="ghost"
                                                     size="icon"
                                                     className="rounded-full"
-                                                    onClick={() => redirect(`/passengers/profile/${passenger.id}`)}
+                                                    onClick={() => redirect(`/passengers/profile/${passenger.id}/ride/${passenger.id}`)}
                                                 >
                                                     <Eye size={32} weight="duotone"/>
                                                 </Button>
@@ -242,55 +208,6 @@ const Passengers = () => {
                                                 View
                                             </TooltipContent>
                                         </Tooltip>
-                                    </TooltipProvider>
-
-                                    <TooltipProvider>
-                                        {/* Delete Rider Dialog Trigger */}
-                                        <Dialog>
-                                            <DialogTrigger>
-                                                {/* Delete Rider Button */}
-                                                <Tooltip>
-                                                    <TooltipTrigger>
-                                                        <Button variant="ghost" size="icon" className="rounded-full">
-                                                            <Trash size={32} className="" weight="duotone"/>
-                                                        </Button>
-                                                        <TooltipContent>
-                                                            Delete
-                                                        </TooltipContent>
-                                                    </TooltipTrigger>
-                                                </Tooltip>
-                                            </DialogTrigger>
-
-                                            <DialogContent>
-                                                <DialogHeader>
-                                                    <DialogTitle>Are you absolutely sure?</DialogTitle>
-                                                </DialogHeader>
-                                                <DialogBody>
-                                                    <DialogDescription>
-                                                        You&#39;re trying to delete a passenger&#39;s account.
-                                                        <p>
-                                                            This will delete the
-                                                            passenger and disable the passenger&#39;s account.
-                                                        </p>
-                                                    </DialogDescription>
-                                                </DialogBody>
-                                                <DialogFooter>
-                                                    <div className="flex gap-2">
-                                                        <DialogClose>
-                                                            <Button variant="ghost">Close</Button>
-                                                        </DialogClose>
-                                                        <DialogClose>
-                                                            <Button
-                                                                variant="destructive"
-                                                                onClick={handleDelete}>
-                                                                Delete
-                                                            </Button>
-                                                        </DialogClose>
-                                                    </div>
-                                                </DialogFooter>
-                                            </DialogContent>
-                                        </Dialog>
-
                                     </TooltipProvider>
                                 </div>
                             </TableCell>
@@ -362,5 +279,4 @@ const Passengers = () => {
     );
 };
 
-export default Passengers;
-
+export default PassengerProfile;
