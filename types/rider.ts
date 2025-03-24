@@ -1,4 +1,4 @@
-type Rider = {
+export type Rider = {
     id: number;
     avatar: string;
     name: string;

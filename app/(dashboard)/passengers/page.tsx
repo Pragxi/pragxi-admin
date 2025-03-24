@@ -1,11 +1,12 @@
 "use client";
+
 import {useEffect, useMemo, useState} from 'react';
 import {Input} from '@/components/ui/input';
 import {Button} from '@/components/ui/button';
 import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow,} from '@/components/ui/table';
 import {Badge} from '@/components/ui/badge';
 import Image from 'next/image';
-import {generateRiders} from "@/dummy/riders";
+import {generatePassengers} from "@/dummy/riders";
 import {Trash} from '@phosphor-icons/react/dist/ssr';
 import {
     Pagination,
@@ -31,12 +32,12 @@ import {
 import {DialogBody} from "next/dist/client/components/react-dev-overlay/ui/components/dialog";
 import toast from "react-hot-toast";
 import {redirect} from "next/navigation";
-import {Rider} from "@/types/rider";
+import {Passenger} from "@/types/passenger";
 
 // Dummy data
-const riders = generateRiders(27);
+const passengers = generatePassengers(27);
 
-const Riders = () => {
+const Passengers = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [sortConfig, setSortConfig] = useState({key: '', direction: ''});
     const [currentPage, setCurrentPage] = useState(1);
@@ -44,17 +45,18 @@ const Riders = () => {
 
     // Search filter
     const filteredData = useMemo(() => {
-        return riders.filter(
-            (rider) =>
-                rider.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                rider.vehicleNumber.toLowerCase().includes(searchTerm.toLowerCase())
+        return passengers.filter(
+            (passenger) =>
+                passenger.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                passenger.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                passenger.phoneNumber.toLowerCase().includes(searchTerm.toLowerCase())
         );
     }, [searchTerm]);
 
     // Sorting
     const sortedData = useMemo(() => {
         if (!sortConfig.key) return filteredData;
-        return [...filteredData].sort((a: Rider, b: Rider) => {
+        return [...filteredData].sort((a: Passenger, b: Passenger) => {
             if (a[sortConfig.key] < b[sortConfig.key]) {
                 return sortConfig.direction === 'asc' ? -1 : 1;
             }
@@ -66,7 +68,7 @@ const Riders = () => {
     }, [filteredData, sortConfig]);
 
     useEffect(() => {
-        const storedItemsPerPage = localStorage.getItem('riders-itemsPerPage');
+        const storedItemsPerPage = localStorage.getItem('passengers-itemsPerPage');
         if (storedItemsPerPage) {
             setItemsPerPage(Number(storedItemsPerPage));
         }
@@ -84,27 +86,27 @@ const Riders = () => {
     };
 
     const handleSetItemsPerPage = (value: number) => {
-        localStorage.setItem('riders-itemsPerPage', value.toString());
+        localStorage.setItem('passengers-itemsPerPage', value.toString());
         setItemsPerPage(value);
     }
 
     // Function to delete a rider with a simulated API call (success or failure randomly simulated)
-    const deleteRider = () => {
+    const deletePassenger = () => {
         return new Promise((resolve, reject) => {
             setTimeout(() => {
                 // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-                Math.random() > 0.5 ? reject("Deletion failed") : resolve("Rider deleted");
+                Math.random() > 0.5 ? reject("Deletion failed") : resolve("Passenger deleted");
             }, 1000);
         });
     }
 
     const handleDelete = async () => {
         await toast.promise(
-            deleteRider(),
+            deletePassenger(),
             {
                 loading: 'Deleting...',
-                success: 'Rider deleted!',
-                error: 'Failed to delete rider',
+                success: 'Passenger deleted!',
+                error: 'Failed to delete passenger',
             }
         )
     }
@@ -113,46 +115,48 @@ const Riders = () => {
         <div className="flex flex-col w-full space-y-6">
             {/* Title Row */}
             <div className="flex justify-between items-center">
-                <h1 className="text-2xl font-bold motion-preset-blur-right">All Riders</h1>
-                <Button className="motion-preset-blur-left text-white">Add Rider</Button>
+                <h1 className="text-2xl font-bold motion-preset-blur-right">All Passengers</h1>
             </div>
 
             {/* Search Row */}
             <div className="flex items-center justify-between py-4">
                 {/* Search Bar */}
                 <Input
-                    placeholder="Search riders..."
+                    placeholder="Search passengers..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="max-w-sm motion-preset-blur-right delay-75"
                 />
 
                 {/* Items Per Row */}
-                <Select
-                    value={itemsPerPage.toString()}
-                    onValueChange={(value) => {
-                        handleSetItemsPerPage(Number(value))
-                        if (currentPage === 1) {
-                            setCurrentPage(2);
-                            setTimeout(() => {
-                                setCurrentPage(1);
-                            }, 0)
-                        } else {
-                            setCurrentPage(1)
-                        }
-                    }}
-                >
-                    <SelectTrigger className="w-[180px] motion-preset-blur-right delay-100">
-                        <SelectValue placeholder="Rows per page"/>
-                    </SelectTrigger>
-                    <SelectContent>
-                        {[5, 10, 20, 50].map((pageSize) => (
-                            <SelectItem key={pageSize} value={pageSize.toString()}>
-                                {pageSize} rows per page
-                            </SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
+                <div className="flex gap-4">
+                    <Select
+                        value={itemsPerPage.toString()}
+                        onValueChange={(value) => {
+                            handleSetItemsPerPage(Number(value))
+                            if (currentPage === 1) {
+                                setCurrentPage(2);
+                                setTimeout(() => {
+                                    setCurrentPage(1);
+                                }, 0)
+                            } else {
+                                setCurrentPage(1)
+                            }
+                        }}
+                    >
+                        <SelectTrigger className="w-[180px] motion-preset-blur-right delay-100">
+                            <SelectValue placeholder="Rows per page"/>
+                        </SelectTrigger>
+                        <SelectContent>
+                            {[5, 10, 20, 50].map((pageSize) => (
+                                <SelectItem key={pageSize} value={pageSize.toString()}>
+                                    {pageSize} rows per page
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                    <Button className="motion-preset-blur-left" variant="outline">Export</Button>
+                </div>
             </div>
 
             {/* Riders Table */}
@@ -161,19 +165,23 @@ const Riders = () => {
                     <TableRow className="bg-gray-100 dark:bg-zinc-800 cursor-pointer rounded-2xl">
                         <TableHead>Avatar</TableHead>
                         <TableHead onClick={() => handleSort('name')}>
-                            Rider {sortConfig.key === 'name' && (
+                            Name {sortConfig.key === 'name' && (
                             <span>{sortConfig.direction === 'asc' ? '▲' : '▼'}</span>
                         )}
                         </TableHead>
-                        <TableHead onClick={() => handleSort('vehicleNumber')}>
-                            Vehicle Number {sortConfig.key === 'vehicleNumber' && (
+                        <TableHead onClick={() => handleSort('email')}>
+                            Email {sortConfig.key === 'email' && (
                             <span>{sortConfig.direction === 'asc' ? '▲' : '▼'}</span>
                         )}
                         </TableHead>
-                        <TableHead>Rating</TableHead>
+                        <TableHead onClick={() => handleSort('rating')}>
+                            Rating {sortConfig.key === 'rating' && (
+                            <span>{sortConfig.direction === 'asc' ? '▲' : '▼'}</span>
+                        )}
+                        </TableHead>
                         <TableHead>Status</TableHead>
-                        <TableHead onClick={() => handleSort('amountEarned')}>
-                            Amount Earned {sortConfig.key === 'amountEarned' && (
+                        <TableHead onClick={() => handleSort('totalRides')}>
+                            Total Rides {sortConfig.key === 'totalRides' && (
                             <span>{sortConfig.direction === 'asc' ? '▲' : '▼'}</span>
                         )}
                         </TableHead>
@@ -181,40 +189,40 @@ const Riders = () => {
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    {paginatedData.map((rider) => (
-                        <TableRow key={rider.id}>
+                    {paginatedData.map((passenger) => (
+                        <TableRow key={passenger.id}>
                             <TableCell suppressHydrationWarning>
                                 <Image
-                                    src={rider.avatar}
-                                    alt={`${rider.name}'s avatar`}
+                                    src={passenger.avatar}
+                                    alt={`${passenger.name}'s avatar`}
                                     width={40}
                                     height={40}
                                     className="rounded-full"
                                 />
                             </TableCell>
-                            <TableCell>{rider.name}</TableCell>
-                            <TableCell>{rider.vehicleNumber}</TableCell>
+                            <TableCell>{passenger.name}</TableCell>
+                            <TableCell>{passenger.email}</TableCell>
                             <TableCell>
                                 {Array.from({length: 5}, (_, i) => (
                                     <Star
                                         weight="fill"
                                         key={i}
-                                        className={i < Math.floor(rider.rating) ?
+                                        className={i < Math.floor(passenger.rating) ?
                                             'text-yellow-500 inline-block' :
                                             'text-gray-300 inline-block'}
                                         size={16}
                                     />
                                 ))}
-                                <span className="ml-2">{rider.rating}</span>
+                                <span className="ml-2">{passenger.rating}</span>
                             </TableCell>
                             <TableCell>
                                 <Badge
-                                    variant={rider.status === 'online' ? "outline_success" : "outline_destructive"}
+                                    variant={passenger.status === 'online' ? "outline_success" : "outline_destructive"}
                                 >
-                                    {rider.status}
+                                    {passenger.status}
                                 </Badge>
                             </TableCell>
-                            <TableCell>GH¢{rider.amountEarned}</TableCell>
+                            <TableCell>{passenger.totalRides}</TableCell>
                             <TableCell>
                                 <div className="flex gap-2">
                                     <TooltipProvider>
@@ -225,7 +233,7 @@ const Riders = () => {
                                                     variant="ghost"
                                                     size="icon"
                                                     className="rounded-full"
-                                                    onClick={() => redirect(`/riders/profile/${rider.id}`)}
+                                                    onClick={() => redirect(`/passengers/profile/${passenger.id}`)}
                                                 >
                                                     <Eye size={32} weight="duotone"/>
                                                 </Button>
@@ -259,10 +267,10 @@ const Riders = () => {
                                                 </DialogHeader>
                                                 <DialogBody>
                                                     <DialogDescription>
-                                                        You&#39;re trying to delete a rider&#39;s account.
+                                                        You&#39;re trying to delete a passenger&#39;s account.
                                                         <p>
                                                             This will delete the
-                                                            rider and disable the rider&#39;s account.
+                                                            passenger and disable the passenger&#39;s account.
                                                         </p>
                                                     </DialogDescription>
                                                 </DialogBody>
@@ -354,4 +362,5 @@ const Riders = () => {
     );
 };
 
-export default Riders;
+export default Passengers;
+

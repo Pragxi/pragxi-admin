@@ -1,23 +1,23 @@
-"use client"
-import {useState} from "react"
-import {toast} from "sonner"
-import {useForm} from "react-hook-form"
-import {zodResolver} from "@hookform/resolvers/zod"
-import * as z from "zod"
-import {Button} from "@/components/ui/button"
-import {Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage,} from "@/components/ui/form"
-import {CloudUpload, Paperclip} from "lucide-react"
-import {FileInput, FileUploader, FileUploaderContent, FileUploaderItem} from "@/components/ui/file-upload"
+"use client";
+import {useState} from "react";
+import {toast} from "sonner";
+import {useForm} from "react-hook-form";
+import {zodResolver} from "@hookform/resolvers/zod";
+import * as z from "zod";
+import {Button} from "@/components/ui/button";
+import {Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage,} from "@/components/ui/form";
+import {FileInput, FileUploader, FileUploaderContent, FileUploaderItem,} from "@/components/ui/file-upload";
+import {CloudUpload, Paperclip} from "lucide-react";
 
+// Updated Zod schema to handle File objects and null values
 const formSchema = z.object({
-    id_card: z.string(),
-    profile_picture: z.string(),
-    drivers_license: z.string(),
-    insurance: z.string()
+    id_card: z.array(z.instanceof(File)).nonempty("At least one ID card file is required"),
+    profile_picture: z.array(z.instanceof(File)).length(1, "Exactly one profile picture is required"),
+    drivers_license: z.array(z.instanceof(File)).nonempty("At least one driver's license file is required"),
+    insurance: z.array(z.instanceof(File)).nonempty("At least one insurance file is required"),
 });
 
 const AddRiderDocumentsForm = () => {
-
     const [idCardFiles, setIdCardFiles] = useState<File[] | null>(null);
     const [driversLicenseFiles, setDriversLicenseFiles] = useState<File[] | null>(null);
     const [insuranceFiles, setInsuranceFiles] = useState<File[] | null>(null);
@@ -25,20 +25,28 @@ const AddRiderDocumentsForm = () => {
 
     const dropZoneConfig = {
         maxFiles: 5,
-        maxSize: 1024 * 1024 * 4,
+        maxSize: 1024 * 1024 * 4, // 4MB
         multiple: true,
     };
 
     const profileDropZoneConfig = {
         maxFiles: 1,
-        maxSize: 1024 * 1024 * 4,
+        maxSize: 1024 * 1024 * 4, // 4MB
         multiple: false,
     };
 
+    // Initialize form with Zod resolver
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
-    })
+        defaultValues: {
+            id_card: [],
+            profile_picture: [],
+            drivers_license: [],
+            insurance: [],
+        },
+    });
 
+    // Handle form submission
     function onSubmit(values: z.infer<typeof formSchema>) {
         try {
             console.log(values);
@@ -55,19 +63,25 @@ const AddRiderDocumentsForm = () => {
 
     return (
         <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)}
-                  className="space-y-4 max-w-3xl my-3 motion-preset-blur-right delay-100">
+            <form
+                onSubmit={form.handleSubmit(onSubmit)}
+                className="space-y-4 max-w-3xl my-3 motion-preset-blur-right delay-100"
+            >
                 <div className="grid grid-cols-2 gap-4">
+                    {/* Profile Picture Field */}
                     <FormField
                         control={form.control}
-                        name="id_card"
+                        name="profile_picture"
                         render={({field}) => (
                             <FormItem>
                                 <FormLabel>Profile Picture</FormLabel>
                                 <FormControl>
                                     <FileUploader
                                         value={profilePicture}
-                                        onValueChange={setProfilePicture}
+                                        onValueChange={(files) => {
+                                            setProfilePicture(files);
+                                            field.onChange(files); // Update react-hook-form state
+                                        }}
                                         dropzoneOptions={profileDropZoneConfig}
                                         className="relative bg-background rounded-lg p-2"
                                     >
@@ -76,14 +90,12 @@ const AddRiderDocumentsForm = () => {
                                             className="outline-dashed outline-1 outline-slate-500 hover:outline-primary transition-all duration-300"
                                         >
                                             <div className="flex items-center justify-center flex-col p-8 w-full ">
-                                                <CloudUpload className='text-gray-500 w-10 h-10'/>
+                                                <CloudUpload className="text-gray-500 w-10 h-10"/>
                                                 <p className="mb-1 text-sm text-gray-500 dark:text-gray-400">
-                                                    <span className="font-semibold">Click to upload</span>
-                                                    &nbsp; or drag and drop
+                                                    <span className="font-semibold">Click to upload</span> &nbsp; or
+                                                    drag and drop
                                                 </p>
-                                                <p className="text-xs text-gray-500 dark:text-gray-400">
-                                                    PNG, JPG
-                                                </p>
+                                                <p className="text-xs text-gray-500 dark:text-gray-400">PNG, JPG</p>
                                             </div>
                                         </FileInput>
                                         <FileUploaderContent>
@@ -104,6 +116,7 @@ const AddRiderDocumentsForm = () => {
                         )}
                     />
 
+                    {/* ID Card Field */}
                     <FormField
                         control={form.control}
                         name="id_card"
@@ -113,7 +126,10 @@ const AddRiderDocumentsForm = () => {
                                 <FormControl>
                                     <FileUploader
                                         value={idCardFiles}
-                                        onValueChange={setIdCardFiles}
+                                        onValueChange={(files) => {
+                                            setIdCardFiles(files);
+                                            field.onChange(files); // Update react-hook-form state
+                                        }}
                                         dropzoneOptions={dropZoneConfig}
                                         className="relative bg-background rounded-lg p-2"
                                     >
@@ -122,17 +138,16 @@ const AddRiderDocumentsForm = () => {
                                             className="outline-dashed outline-1 outline-slate-500 hover:outline-primary transition-all duration-300"
                                         >
                                             <div className="flex items-center justify-center flex-col p-8 w-full ">
-                                                <CloudUpload className='text-gray-500 w-10 h-10'/>
+                                                <CloudUpload className="text-gray-500 w-10 h-10"/>
                                                 <p className="mb-1 text-sm text-gray-500 dark:text-gray-400">
-                                                    <span className="font-semibold">Click to upload</span>
-                                                    &nbsp; or drag and drop
+                                                    <span className="font-semibold">Click to upload</span> &nbsp; or
+                                                    drag and drop
                                                 </p>
                                                 <p className="text-xs text-gray-500 dark:text-gray-400">
                                                     SVG, PNG, JPG, PDF or GIF
                                                 </p>
-
                                                 <p className="text-xs text-gray-500 dark:text-gray-400">
-                                                    you can add more than one document
+                                                    You can add more than one document
                                                 </p>
                                             </div>
                                         </FileInput>
@@ -154,7 +169,9 @@ const AddRiderDocumentsForm = () => {
                         )}
                     />
                 </div>
+
                 <div className="grid grid-cols-2 gap-4">
+                    {/* Driver's License Field */}
                     <FormField
                         control={form.control}
                         name="drivers_license"
@@ -164,7 +181,10 @@ const AddRiderDocumentsForm = () => {
                                 <FormControl>
                                     <FileUploader
                                         value={driversLicenseFiles}
-                                        onValueChange={setDriversLicenseFiles}
+                                        onValueChange={(files) => {
+                                            setDriversLicenseFiles(files);
+                                            field.onChange(files); // Update react-hook-form state
+                                        }}
                                         dropzoneOptions={dropZoneConfig}
                                         className="relative bg-background rounded-lg p-2"
                                     >
@@ -173,17 +193,16 @@ const AddRiderDocumentsForm = () => {
                                             className="outline-dashed outline-1 outline-slate-500 hover:outline-primary transition-all duration-300"
                                         >
                                             <div className="flex items-center justify-center flex-col p-8 w-full ">
-                                                <CloudUpload className='text-gray-500 w-10 h-10'/>
+                                                <CloudUpload className="text-gray-500 w-10 h-10"/>
                                                 <p className="mb-1 text-sm text-gray-500 dark:text-gray-400">
-                                                    <span className="font-semibold">Click to upload</span>
-                                                    &nbsp; or drag and drop
+                                                    <span className="font-semibold">Click to upload</span> &nbsp; or
+                                                    drag and drop
                                                 </p>
                                                 <p className="text-xs text-gray-500 dark:text-gray-400">
                                                     SVG, PNG, JPG, PDF or GIF
                                                 </p>
-
                                                 <p className="text-xs text-gray-500 dark:text-gray-400">
-                                                    you can add more than one document
+                                                    You can add more than one document
                                                 </p>
                                             </div>
                                         </FileInput>
@@ -205,6 +224,7 @@ const AddRiderDocumentsForm = () => {
                         )}
                     />
 
+                    {/* Insurance Field */}
                     <FormField
                         control={form.control}
                         name="insurance"
@@ -214,7 +234,10 @@ const AddRiderDocumentsForm = () => {
                                 <FormControl>
                                     <FileUploader
                                         value={insuranceFiles}
-                                        onValueChange={setInsuranceFiles}
+                                        onValueChange={(files) => {
+                                            setInsuranceFiles(files);
+                                            field.onChange(files); // Update react-hook-form state
+                                        }}
                                         dropzoneOptions={dropZoneConfig}
                                         className="relative bg-background rounded-lg p-2"
                                     >
@@ -223,17 +246,16 @@ const AddRiderDocumentsForm = () => {
                                             className="outline-dashed outline-1 outline-slate-500 hover:outline-primary transition-all duration-300"
                                         >
                                             <div className="flex items-center justify-center flex-col p-8 w-full ">
-                                                <CloudUpload className='text-gray-500 w-10 h-10'/>
+                                                <CloudUpload className="text-gray-500 w-10 h-10"/>
                                                 <p className="mb-1 text-sm text-gray-500 dark:text-gray-400">
-                                                    <span className="font-semibold">Click to upload</span>
-                                                    &nbsp; or drag and drop
+                                                    <span className="font-semibold">Click to upload</span> &nbsp; or
+                                                    drag and drop
                                                 </p>
                                                 <p className="text-xs text-gray-500 dark:text-gray-400">
                                                     SVG, PNG, JPG, PDF or GIF
                                                 </p>
-
                                                 <p className="text-xs text-gray-500 dark:text-gray-400">
-                                                    you can add more than one document
+                                                    You can add more than one document
                                                 </p>
                                             </div>
                                         </FileInput>
@@ -255,10 +277,11 @@ const AddRiderDocumentsForm = () => {
                         )}
                     />
                 </div>
+
                 <Button type="submit">Submit</Button>
             </form>
         </Form>
-    )
-}
+    );
+};
 
 export default AddRiderDocumentsForm;
