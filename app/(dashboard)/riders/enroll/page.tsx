@@ -13,7 +13,6 @@ const EnrollRider = () => {
     return (
         <div className="flex flex-col w-full space-y-6">
             <div className="flex justify-between">
-                {/* User Image and mini details */}
                 <div className="flex flex-col">
                     <div className="text-2xl font-bold">
                         Add New Rider
