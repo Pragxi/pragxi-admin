@@ -6,10 +6,10 @@ import {Button} from "@/components/ui/button";
 import {CalendarCheck, Dot, PencilSimpleLine, Phone, Star, User} from "@phosphor-icons/react/dist/ssr";
 import {generateRiders} from "@/dummy/riders";
 import {Tabs, TabsContent, TabsList, TabsTrigger} from "@/components/ui/tabs";
-import ViewRiderPersonalInformationForm from "@/components/forms/riders/view-rider-personal-information-form";
-import ViewRiderSecurityInformationForm from '@/components/forms/riders/view-rider-security-information-form';
-import ViewRiderFinanceInformationForm from "@/components/forms/riders/view-rider-finance-information-form";
-import ViewRiderDocumentsForm from "@/components/forms/riders/view-rider-documents-form";
+import ViewRiderPersonalInformationForm from "@/components/forms/riders/view/view-rider-personal-information-form";
+import ViewRiderSecurityInformationForm from '@/components/forms/riders/view/view-rider-security-information-form';
+import ViewRiderFinanceInformationForm from "@/components/forms/riders/view/view-rider-finance-information-form";
+import ViewRiderDocumentsForm from "@/components/forms/riders/view/view-rider-documents-form";
 import {useParams} from "next/navigation";
 import {Params} from "next/dist/server/request/params";
 
@@ -146,7 +146,9 @@ const RiderProfile = () => {
                     </Tabs>
                 </TabsContent>
 
-                <TabsContent value="history">Change your password here.</TabsContent>
+                <TabsContent value="history">
+                    Rider History Will be here
+                </TabsContent>
             </Tabs>
 
         </div>
