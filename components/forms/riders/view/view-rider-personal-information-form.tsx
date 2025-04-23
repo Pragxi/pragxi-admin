@@ -84,7 +84,7 @@ const ViewRiderPersonalInformationForm = () => {
         <Form {...form}>
             <form
                 onSubmit={form.handleSubmit(onSubmit)}
-                className="space-y-4 max-w-3xl my-3 motion-preset-blur-right delay-100"
+                className="space-y-4  my-3 motion-preset-blur-right delay-100"
             >
                 {/* First Name & Last Name */}
                 <div className="grid grid-cols-2 gap-4">
