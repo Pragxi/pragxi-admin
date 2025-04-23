@@ -45,7 +45,7 @@ const ViewRiderFinanceInformationForm = () => {
         <Form {...form}>
             <form
                 onSubmit={form.handleSubmit(onSubmit)}
-                className="space-y-4 max-w-3xl my-3 motion-preset-blur-right delay-100"
+                className="space-y-4 my-3 motion-preset-blur-right delay-100"
             >
                 {/* Vehicle Information */}
                 <div className="grid grid-cols-2 gap-4">
