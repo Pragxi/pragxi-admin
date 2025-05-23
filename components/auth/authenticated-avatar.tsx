@@ -12,22 +12,40 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import {SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar,} from "@/components/ui/sidebar"
-import {useQuery} from "@tanstack/react-query";
-import {getUserDataAction} from "@/app/(server-actions)/(user-actions)/get-user-data.action";
+import {useQuery} from "@tanstack/react-query"
+import {getUserDataAction} from "@/app/(server-actions)/(user-actions)/get-user-data.action"
+import {logoutAction} from "@/app/(server-actions)/(auth-actions)/logout.action"
+import {useRouter} from "next/navigation"
+import {toast} from "sonner";
 
 const AuthenticatedAvatar = () => {
     const {isMobile} = useSidebar()
-
+    const router = useRouter()
 
     const {data: userData, isLoading, error} = useQuery({
         queryKey: ['logged-in-user'],
-        queryFn: getUserDataAction
-    });
+        queryFn: getUserDataAction,
+    })
 
-    if (isLoading) return <div>Loading...</div>;
-    if (error || !userData || 'error' in userData) return <div>Error loading user data</div>;
+    if (isLoading) return <div>Loading...</div>
+    if (error || !userData || 'error' in userData) return <div>Error loading user data</div>
 
-    const user = userData.user;
+    const user = userData.user
+
+    const handleLogout = async () => {
+        toast.promise(
+            logoutAction(),
+            {
+                loading: "Logging out...",
+                success: () => {
+                    router.push("/login");
+                    return "You have been logged out successfully.";
+                },
+                error: (err: Error) => `Failed to log out: ${err?.message || "Unknown error"}`
+            },
+        );
+    }
+
 
     return (
         <SidebarMenu>
@@ -90,7 +108,7 @@ const AuthenticatedAvatar = () => {
                             </DropdownMenuItem>
                         </DropdownMenuGroup>
                         <DropdownMenuSeparator/>
-                        <DropdownMenuItem>
+                        <DropdownMenuItem onClick={handleLogout}>
                             <LogOut/>
                             Log out
                         </DropdownMenuItem>
@@ -101,4 +119,4 @@ const AuthenticatedAvatar = () => {
     )
 }
 
-export default AuthenticatedAvatar;
+export default AuthenticatedAvatar
