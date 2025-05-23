@@ -163,7 +163,7 @@ export function AppSidebar({collapsed, setCollapsed}: { collapsed: boolean; setC
                 <SidebarMenu>
                     <SidebarMenuItem>
                         <div className="flex w-full">
-                            <AuthenticatedAvatar collapsed={collapsed}/>
+                            <AuthenticatedAvatar />
                         </div>
                     </SidebarMenuItem>
                 </SidebarMenu>
