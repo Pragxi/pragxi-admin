@@ -54,7 +54,7 @@ const ViewRiderDocumentsForm = () => {
     function onSubmit(values: z.infer<typeof formSchema>) {
         try {
             console.log(values);
-            toast(
+            toast.success(
                 <pre className="mt-2 w-[340px] rounded-md bg-slate-950 p-4">
           <code className="text-white">{JSON.stringify(values, null, 2)}</code>
         </pre>
@@ -69,7 +69,7 @@ const ViewRiderDocumentsForm = () => {
         <Form {...form}>
             <form
                 onSubmit={form.handleSubmit(onSubmit)}
-                className="space-y-4 max-w-3xl my-3 motion-preset-blur-right delay-100"
+                className="space-y-4 my-3 motion-preset-blur-right delay-100"
             >
                 {/* ID Card Field */}
                 <FormField

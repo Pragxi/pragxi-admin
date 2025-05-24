@@ -21,7 +21,7 @@ const ViewPassengerRiderForm = (
         rating,
     }: RideDetailsProps) => {
     return (
-        <div className="w-2/3 flex flex-col gap-4 motion-preset-blur-up">
+        <div className="flex flex-col gap-4 motion-preset-blur-up">
 
             {/* Rider Name & Ride ID */}
             <div className="grid grid-cols-2 gap-4">

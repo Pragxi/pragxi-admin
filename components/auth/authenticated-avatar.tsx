@@ -1,45 +1,122 @@
-import React from 'react';
+"use client"
+
+import {BadgeCheck, Bell, ChevronsUpDown, CreditCard, LogOut, Sparkles,} from "lucide-react"
+import {Avatar, AvatarFallback, AvatarImage,} from "@/components/ui/avatar"
 import {
     DropdownMenu,
     DropdownMenuContent,
+    DropdownMenuGroup,
     DropdownMenuItem,
+    DropdownMenuLabel,
     DropdownMenuSeparator,
-    DropdownMenuTrigger
-} from "@/components/ui/dropdown-menu";
-import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar";
-import {cn} from "@/lib/utils";
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import {SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar,} from "@/components/ui/sidebar"
+import {useQuery} from "@tanstack/react-query"
+import {getUserDataAction} from "@/app/(server-actions)/(user-actions)/get-user-data.action"
+import {logoutAction} from "@/app/(server-actions)/(auth-actions)/logout.action"
+import {useRouter} from "next/navigation"
+import {toast} from "sonner";
 
-const AuthenticatedAvatar = ({...prop}) => {
+const AuthenticatedAvatar = () => {
+    const {isMobile} = useSidebar()
+    const router = useRouter()
 
-    const {collapsed} = prop;
+    const {data: userData, isLoading, error} = useQuery({
+        queryKey: ['logged-in-user'],
+        queryFn: getUserDataAction,
+    })
+
+    if (isLoading) return <div>Loading...</div>
+    if (error || !userData || 'error' in userData) return <div>Error loading user data</div>
+
+    const user = userData.user
+
+    const handleLogout = async () => {
+        toast.promise(
+            logoutAction(),
+            {
+                loading: "Logging out...",
+                success: () => {
+                    router.push("/login");
+                    return "You have been logged out successfully.";
+                },
+                error: (err: Error) => `Failed to log out: ${err?.message || "Unknown error"}`
+            },
+        );
+    }
+
+
     return (
-        <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-                <div className={
-                    cn("rounded-full transition-all duration-300 cursor-pointer p-1 flex items-center gap-2 w-full hover:bg-gray-100 dark:hover:bg-zinc-800",
-                        !collapsed && "rounded-lg p-2 border border-gray-200 dark:border-zinc-700")}>
-                    <Avatar>
-                        <AvatarImage src="https://github.com/shadcn.png"/>
-                        <AvatarFallback>CN</AvatarFallback>
-                    </Avatar>
-                    {!collapsed && <div>Joe</div>}
-                </div>
-            </DropdownMenuTrigger>
+        <SidebarMenu>
+            <SidebarMenuItem>
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <SidebarMenuButton
+                            size="lg"
+                            className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+                        >
+                            <Avatar className="h-6 w-6 rounded-lg">
+                                <AvatarImage src={user?.user_metadata.avatarUrl || `/api/avatar/${user?.id}`}/>
+                                <AvatarFallback>{user?.user_metadata.display_name?.substring(0, 2)}</AvatarFallback>
+                            </Avatar>
+                            <div className="grid flex-1 text-left text-sm leading-tight">
+                                <span className="truncate font-semibold">{user?.user_metadata.display_name}</span>
+                                <span className="truncate text-xs">{user?.user_metadata.email}</span>
+                            </div>
+                            <ChevronsUpDown className="ml-auto size-4"/>
+                        </SidebarMenuButton>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent
+                        className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg"
+                        side={isMobile ? "bottom" : "right"}
+                        align="end"
+                        sideOffset={4}
+                    >
+                        <DropdownMenuLabel className="p-0 font-normal">
+                            <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
+                                <Avatar className="h-8 w-8 rounded-lg">
+                                    <AvatarImage src={user?.user_metadata.avatarUrl || `/api/avatar/${user?.id}`}/>
+                                    <AvatarFallback>{user?.user_metadata.display_name?.substring(0, 2)}</AvatarFallback>
+                                </Avatar>
+                                <div className="grid flex-1 text-left text-sm leading-tight">
+                                    <span className="truncate font-semibold">{user?.user_metadata.display_name}</span>
+                                    <span className="truncate text-xs">{user?.user_metadata.email}</span>
+                                </div>
+                            </div>
+                        </DropdownMenuLabel>
+                        <DropdownMenuSeparator/>
+                        <DropdownMenuGroup>
+                            <DropdownMenuItem>
+                                <Sparkles/>
+                                Upgrade to Pro
+                            </DropdownMenuItem>
+                        </DropdownMenuGroup>
+                        <DropdownMenuSeparator/>
+                        <DropdownMenuGroup>
+                            <DropdownMenuItem>
+                                <BadgeCheck/>
+                                Account
+                            </DropdownMenuItem>
+                            <DropdownMenuItem>
+                                <CreditCard/>
+                                Billing
+                            </DropdownMenuItem>
+                            <DropdownMenuItem>
+                                <Bell/>
+                                Notifications
+                            </DropdownMenuItem>
+                        </DropdownMenuGroup>
+                        <DropdownMenuSeparator/>
+                        <DropdownMenuItem onClick={handleLogout}>
+                            <LogOut/>
+                            Log out
+                        </DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
+            </SidebarMenuItem>
+        </SidebarMenu>
+    )
+}
 
-            <DropdownMenuContent align="end">
-                <DropdownMenuItem>
-                    Profile
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                    Settings
-                </DropdownMenuItem>
-                <DropdownMenuSeparator/>
-                <DropdownMenuItem>
-                    Logout
-                </DropdownMenuItem>
-            </DropdownMenuContent>
-        </DropdownMenu>
-    );
-};
-
-export default AuthenticatedAvatar;
+export default AuthenticatedAvatar
