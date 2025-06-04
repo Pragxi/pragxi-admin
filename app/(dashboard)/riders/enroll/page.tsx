@@ -1,14 +1,14 @@
 "use client";
 
-import React from 'react';
+import React, { useState } from 'react';
 import {Tabs, TabsContent, TabsList, TabsTrigger} from "@/components/ui/tabs";
 import AddRiderPersonalInformationForm from "@/components/forms/riders/add/add-rider-personal-information-form";
 import AddRiderSecurityInformationForm from '@/components/forms/riders/add/add-rider-security-information-form';
 import AddRiderFinanceInformationForm from "@/components/forms/riders/add/add-rider-finance-information-form";
 import AddRiderDocumentsForm from "@/components/forms/riders/add/add-rider-documents-form";
 
-
 const EnrollRider = () => {
+    const [activeTab, setActiveTab] = useState("personal_information");
 
     return (
         <div className="flex flex-col w-full space-y-6">
@@ -24,7 +24,12 @@ const EnrollRider = () => {
             </div>
             <hr/>
 
-            <Tabs defaultValue="personal_information">
+            <Tabs
+                defaultValue="personal_information"
+                value={activeTab}
+                onValueChange={setActiveTab}
+                className="w-full"
+            >
                 <TabsList className="bg-transparent flex gap-2">
                     <TabsTrigger
                         value="personal_information"
@@ -60,24 +65,38 @@ const EnrollRider = () => {
                     </TabsTrigger>
                 </TabsList>
 
-                <TabsContent value="personal_information">
+                <TabsContent
+                    value="personal_information"
+                    forceMount
+                    hidden={activeTab !== "personal_information"}
+                >
                     <AddRiderPersonalInformationForm/>
                 </TabsContent>
 
-                <TabsContent value="security_information">
+                <TabsContent
+                    value="security_information"
+                    forceMount
+                    hidden={activeTab !== "security_information"}
+                >
                     <AddRiderSecurityInformationForm/>
                 </TabsContent>
 
-                <TabsContent value="document">
+                <TabsContent
+                    value="document"
+                    forceMount
+                    hidden={activeTab !== "document"}
+                >
                     <AddRiderDocumentsForm/>
                 </TabsContent>
 
-                <TabsContent value="finance">
+                <TabsContent
+                    value="finance"
+                    forceMount
+                    hidden={activeTab !== "finance"}
+                >
                     <AddRiderFinanceInformationForm/>
                 </TabsContent>
-
             </Tabs>
-
         </div>
     );
 };

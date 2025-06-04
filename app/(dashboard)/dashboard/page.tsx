@@ -3,7 +3,7 @@ import StatisticsCard from "@/components/dashboard/statistics-card";
 import {CurrencyCircleDollar} from "@phosphor-icons/react/dist/ssr";
 import {dashboardCharts} from "@/dummy/apex-charts";
 import dynamic from 'next/dynamic';
-import RevenueChart from "@/components/revenue-chart";
+import RevenueChart from "@/components/dashboard/revenue-chart";
 import {Motorcycle, Users} from "@phosphor-icons/react";
 
 const Chart = dynamic(() => import('react-apexcharts'), {ssr: false});

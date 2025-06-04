@@ -17,6 +17,7 @@ import {getUserDataAction} from "@/app/(server-actions)/(user-actions)/get-user-
 import {logoutAction} from "@/app/(server-actions)/(auth-actions)/logout.action"
 import {useRouter} from "next/navigation"
 import {toast} from "sonner";
+import {Skeleton} from "@/components/ui/skeleton"
 
 const AuthenticatedAvatar = () => {
     const {isMobile} = useSidebar()
@@ -25,10 +26,22 @@ const AuthenticatedAvatar = () => {
     const {data: userData, isLoading, error} = useQuery({
         queryKey: ['logged-in-user'],
         queryFn: getUserDataAction,
-    })
+    });
 
-    if (isLoading) return <div>Loading...</div>
-    if (error || !userData || 'error' in userData) return <div>Error loading user data</div>
+    if (isLoading) return (
+        <SidebarMenu>
+            <SidebarMenuItem>
+                <Skeleton className="h-10 w-10 rounded-lg"/>
+            </SidebarMenuItem>
+        </SidebarMenu>
+    )
+    if (error || !userData || 'error' in userData) return (
+        <SidebarMenu>
+            <SidebarMenuItem>
+                <Skeleton className="h-10 w-10 rounded-lg"/>
+            </SidebarMenuItem>
+        </SidebarMenu>
+    )
 
     const user = userData.user
 
