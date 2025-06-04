@@ -32,6 +32,7 @@ import {DialogBody} from "next/dist/client/components/react-dev-overlay/ui/compo
 import toast from "react-hot-toast";
 import {redirect} from "next/navigation";
 import {Rider} from "@/types/rider";
+import {Link} from "next-view-transitions";
 
 // Dummy data
 const riders = generateRiders(27);
@@ -114,7 +115,9 @@ const Riders = () => {
             {/* Title Row */}
             <div className="flex justify-between items-center">
                 <h1 className="text-2xl font-bold motion-preset-blur-right">All Riders</h1>
-                <Button className="motion-preset-blur-left text-white">Add Rider</Button>
+                <Link href="/riders/enroll">
+                    <Button className="motion-preset-blur-left text-white">Add Rider</Button>
+                </Link>
             </div>
 
             {/* Search Row */}

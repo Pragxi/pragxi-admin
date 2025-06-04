@@ -12,20 +12,7 @@ import {Popover, PopoverContent, PopoverTrigger} from "@/components/ui/popover";
 import {Calendar} from "@/components/ui/calendar";
 import {Calendar as CalendarIcon} from "lucide-react";
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue,} from "@/components/ui/select";
-
-const formSchema = z.object({
-    vehicle: z.string().min(1),
-    vehicle_number: z.string().min(1),
-    vehicle_color: z.string().min(1),
-    id_number: z.string().min(1),
-    drivers_license_number: z.string().min(1),
-    insurance_type: z.string().min(1),
-    insurance_number: z.string().min(1),
-    insurance_expiration: z.coerce.date(),
-    witness_name: z.string().min(1),
-    relationship: z.string(),
-    witness_contact_number: z.string().min(1),
-});
+import {riderSecurityInformationSchema} from "@/types/rider";
 
 const relationships = [
     {label: "Parent", value: "parent"},
@@ -35,14 +22,14 @@ const relationships = [
 ];
 
 const AddRiderSecurityInformationForm = () => {
-    const form = useForm<z.infer<typeof formSchema>>({
-        resolver: zodResolver(formSchema),
+    const form = useForm<z.infer<typeof riderSecurityInformationSchema>>({
+        resolver: zodResolver(riderSecurityInformationSchema),
         defaultValues: {
             insurance_expiration: new Date(),
         },
     });
 
-    function onSubmit(values: z.infer<typeof formSchema>) {
+    function onSubmit(values: z.infer<typeof riderSecurityInformationSchema>) {
         try {
             console.log(values);
             toast.success(
