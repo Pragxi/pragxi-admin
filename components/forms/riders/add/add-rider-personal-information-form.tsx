@@ -33,13 +33,15 @@ import {
     CommandItem,
     CommandList,
 } from "@/components/ui/command";
+import { createRider } from '@/app/actions/rider'
+import { useRouter } from 'next/navigation'
 
 const formSchema = z.object({
     first_name: z.string().min(1),
     last_name: z.string().min(1),
     phone_number: z.string().min(1),
     email: z.string().email(),
-    date_of_birth: z.coerce.date(),
+    dob: z.coerce.date(),
     marital_status: z.string(),
     gender: z.string(),
     nationality: z.string(),
@@ -56,27 +58,43 @@ const countries = [
 ];
 
 const AddRiderPersonalInformationForm = () => {
+    const router = useRouter()
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
         defaultValues: {
-            date_of_birth: new Date(),
-            nationality: "ghana",
-            gender: "male",
-            marital_status: "single",
+            first_name: "",
+            last_name: "",
+            phone_number: "",
+            email: "",
+            marital_status: "",
+            gender: "",
+            nationality: "",
+            city: "",
+            gps_address: "",
         },
-    });
+    })
 
-    function onSubmit(values: z.infer<typeof formSchema>) {
+    const onSubmit = async (values: z.infer<typeof formSchema>) => {
         try {
-            console.log(values);
-            toast.success(
-                <pre className="mt-2 w-[340px] rounded-md bg-slate-950 p-4">
-          <code className="text-white">{JSON.stringify(values, null, 2)}</code>
-        </pre>
-            );
+            console.log('Form values:', values)
+
+            const result = await createRider(values)
+
+            if (result.error) {
+                console.error('Error:', result.error)
+                toast.error(result.error)
+                return
+            }
+
+            console.log('Success:', result.data)
+            toast.success('Rider created successfully')
+            
+            // Optionally redirect to the rider's profile or list
+            router.push('/riders')
+            router.refresh()
         } catch (error) {
-            console.error("Form submission error", error);
-            toast.error("Failed to submit the form. Please try again.");
+            console.error('Submission error:', error)
+            toast.error('Failed to create rider')
         }
     }
 
@@ -179,7 +197,7 @@ const AddRiderPersonalInformationForm = () => {
                     <div>
                         <FormField
                             control={form.control}
-                            name="date_of_birth"
+                            name="dob"
                             render={({field}) => (
                                 <FormItem className="flex flex-col">
                                     <FormLabel>Date of birth</FormLabel>
