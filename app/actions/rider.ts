@@ -5,6 +5,7 @@ import { cookies } from 'next/headers'
 import { v4 as uuidv4 } from 'uuid'
 import { CookieOptions } from '@supabase/ssr'
 import { type RiderFormData } from '@/types/rider' // Import from the new file
+import { z } from 'zod'
 
 export async function createRider(formData: RiderFormData) {
   try {
