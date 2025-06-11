@@ -19,8 +19,7 @@ export async function createRider(formData: RiderFormData) {
       {
         cookies: {
           get(name: string) {
-            const cookie = cookieStore.get(name)
-            return cookie?.value
+            return cookieStore.get(name)?.value
           },
           set(name: string, value: string, options: CookieOptions) {
             cookieStore.set(name, value, options)

@@ -5,26 +5,30 @@ import {zodResolver} from "@hookform/resolvers/zod";
 import * as z from "zod";
 import {cn} from "@/lib/utils";
 import {Button} from "@/components/ui/button";
-import {Form, FormControl, FormField, FormItem, FormLabel, FormMessage,} from "@/components/ui/form";
+import {Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription} from "@/components/ui/form";
 import {Input} from "@/components/ui/input";
 import {format} from "date-fns";
 import {Popover, PopoverContent, PopoverTrigger} from "@/components/ui/popover";
 import {Calendar} from "@/components/ui/calendar";
 import {Calendar as CalendarIcon} from "lucide-react";
-import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue,} from "@/components/ui/select";
+import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select";
+import {createRiderSecurityInformation} from "@/app/actions/rider-security-actions";
 
 const formSchema = z.object({
-    vehicle: z.string().min(1),
-    vehicle_number: z.string().min(1),
-    vehicle_color: z.string().min(1),
-    id_number: z.string().min(1),
-    drivers_license_number: z.string().min(1),
-    insurance_type: z.string().min(1),
-    insurance_number: z.string().min(1),
-    insurance_expiration: z.coerce.date(),
-    witness_name: z.string().min(1),
-    relationship: z.string(),
-    witness_contact_number: z.string().min(1),
+    vehicle: z.string().min(1, "Vehicle is required"),
+    vehicle_number: z.string().min(1, "Vehicle number is required"),
+    vehicle_color: z.string().min(1, "Vehicle color is required"),
+    id_number: z.string().min(1, "ID number is required"),
+    drivers_license_number: z.string().min(1, "Driver's license number is required"),
+    insurance_type: z.string().min(1, "Insurance type is required"),
+    insurance_number: z.string().min(1, "Insurance number is required"),
+    insurance_expiration: z.coerce.date({
+        required_error: "Insurance expiration date is required.",
+        invalid_type_error: "Invalid date format for insurance expiration.",
+    }).min(new Date(), "Expiration date must be in the future."),
+    witness_name: z.string().min(1, "Witness name is required"),
+    relationship: z.string().min(1, "Relationship is required"),
+    witness_contact_number: z.string().min(1, "Witness contact number is required"),
 });
 
 const relationships = [
@@ -38,21 +42,35 @@ const AddRiderSecurityInformationForm = () => {
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
         defaultValues: {
-            insurance_expiration: new Date(),
+            relationship: "parent",
+            vehicle: "",
+            vehicle_number: "",
+            vehicle_color: "",
+            id_number: "",
+            drivers_license_number: "",
+            insurance_type: "",
+            insurance_number: "",
+            insurance_expiration: undefined,
+            witness_name: "",
+            witness_contact_number: "",
         },
     });
 
-    function onSubmit(values: z.infer<typeof formSchema>) {
+    async function onSubmit(values: z.infer<typeof formSchema>) {
         try {
-            console.log(values);
-            toast.success(
-                <pre className="mt-2 w-[340px] rounded-md bg-slate-950 p-4">
-          <code className="text-white">{JSON.stringify(values, null, 2)}</code>
-        </pre>
-            );
+            console.log("Submitting values:", values);
+            const result = await createRiderSecurityInformation(values);
+
+            if (result.success) {
+                toast.success("Security information saved successfully");
+                form.reset();
+            } else if (result.error) {
+                console.error("Server action error:", result.error);
+                toast.error(result.error);
+            }
         } catch (error) {
-            console.error("Form submission error", error);
-            toast.error("Failed to submit the form. Please try again.");
+            console.error("Client-side form submission error:", error);
+            toast.error("An unexpected error occurred. Please try again.");
         }
     }
 
@@ -172,7 +190,7 @@ const AddRiderSecurityInformationForm = () => {
                         name="insurance_expiration"
                         render={({field}) => (
                             <FormItem className="flex flex-col">
-                                <FormLabel>Insurance Expiration</FormLabel>
+                                <FormLabel>Insurance Expiration Date</FormLabel>
                                 <Popover>
                                     <PopoverTrigger asChild>
                                         <FormControl>
@@ -197,10 +215,14 @@ const AddRiderSecurityInformationForm = () => {
                                             mode="single"
                                             selected={field.value}
                                             onSelect={field.onChange}
+                                            disabled={(date) => date < new Date()}
                                             initialFocus
                                         />
                                     </PopoverContent>
                                 </Popover>
+                                <FormDescription>
+                                    Your insurance expiration date.
+                                </FormDescription>
                                 <FormMessage/>
                             </FormItem>
                         )}
@@ -248,22 +270,19 @@ const AddRiderSecurityInformationForm = () => {
                     />
                 </div>
 
-                {/* Witness Contact */}
-                <div className="grid grid-cols-2 gap-4">
-                    <FormField
-                        control={form.control}
-                        name="witness_contact_number"
-                        render={({field}) => (
-                            <FormItem>
-                                <FormLabel>Witness Contact Number</FormLabel>
-                                <FormControl>
-                                    <Input placeholder="e.g. +233 24 123 4567" {...field} />
-                                </FormControl>
-                                <FormMessage/>
-                            </FormItem>
-                        )}
-                    />
-                </div>
+                <FormField
+                    control={form.control}
+                    name="witness_contact_number"
+                    render={({field}) => (
+                        <FormItem>
+                            <FormLabel>Witness Contact Number</FormLabel>
+                            <FormControl>
+                                <Input placeholder="e.g. 233248999999" {...field} />
+                            </FormControl>
+                            <FormMessage/>
+                        </FormItem>
+                    )}
+                />
 
                 <Button type="submit">Submit</Button>
             </form>

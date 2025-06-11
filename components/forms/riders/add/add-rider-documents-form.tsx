@@ -8,6 +8,7 @@ import {Button} from "@/components/ui/button";
 import {Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage,} from "@/components/ui/form";
 import {FileInput, FileUploader, FileUploaderContent, FileUploaderItem,} from "@/components/ui/file-upload";
 import {CloudUpload, Paperclip} from "lucide-react";
+import {createRiderDocuments} from "@/app/actions/rider-document-actions";
 
 // Updated Zod schema to handle File objects and null values
 const formSchema = z.object({
@@ -18,15 +19,18 @@ const formSchema = z.object({
 });
 
 const AddRiderDocumentsForm = () => {
-    const [idCardFiles, setIdCardFiles] = useState<File[] | null>(null);
-    const [driversLicenseFiles, setDriversLicenseFiles] = useState<File[] | null>(null);
-    const [insuranceFiles, setInsuranceFiles] = useState<File[] | null>(null);
+    const [idCardFiles, setIdCardFiles] = useState<File[]>([]);
+    const [driversLicenseFiles, setDriversLicenseFiles] = useState<File[]>([]);
+    const [insuranceFiles, setInsuranceFiles] = useState<File[]>([]);
     const [profilePicture, setProfilePicture] = useState<File[] | null>(null);
 
     const dropZoneConfig = {
         maxFiles: 5,
-        maxSize: 1024 * 1024 * 4, // 4MB
-        multiple: true,
+        maxSize: 5 * 1024 * 1024, // 5MB
+        accept: {
+            'image/*': ['.png', '.jpg', '.jpeg'],
+            'application/pdf': ['.pdf'],
+        },
     };
 
     const profileDropZoneConfig = {
@@ -46,18 +50,27 @@ const AddRiderDocumentsForm = () => {
         },
     });
 
-    // Handle form submission
-    function onSubmit(values: z.infer<typeof formSchema>) {
+    async function onSubmit(values: z.infer<typeof formSchema>) {
         try {
-            console.log(values);
-            toast.success(
-                <pre className="mt-2 w-[340px] rounded-md bg-slate-950 p-4">
-          <code className="text-white">{JSON.stringify(values, null, 2)}</code>
-        </pre>
-            );
+            const formData = new FormData();
+            values.id_card.forEach(file => formData.append('id_card', file));
+            values.drivers_license.forEach(file => formData.append('drivers_license', file));
+            values.insurance.forEach(file => formData.append('insurance', file));
+
+            const result = await createRiderDocuments(formData);
+
+            if (result.success) {
+                toast.success("Documents uploaded successfully");
+                form.reset();
+                setIdCardFiles([]);
+                setDriversLicenseFiles([]);
+                setInsuranceFiles([]);
+            } else if (result.error) {
+                toast.error(result.error);
+            }
         } catch (error) {
-            console.error("Form submission error", error);
-            toast.error("Failed to submit the form. Please try again.");
+            console.error("Client-side form submission error:", error);
+            toast.error("An unexpected error occurred. Please try again.");
         }
     }
 
