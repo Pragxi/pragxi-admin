@@ -1,9 +1,6 @@
 'use server'
 
-import { createServerClient } from '@supabase/ssr'
-import { cookies } from 'next/headers'
-import { v4 as uuidv4 } from 'uuid'
-import { CookieOptions } from '@supabase/ssr'
+import { createClient } from '@/utils/supabase/server'
 import { type RiderFormData } from '@/types/rider' // Import from the new file
 import { z } from 'zod'
 
@@ -11,29 +8,13 @@ export async function createRider(formData: RiderFormData) {
   try {
     console.log('Received form data:', formData)
 
-    const cookieStore = cookies()
-    
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          get(name: string) {
-            return cookieStore.get(name)?.value
-          },
-          set(name: string, value: string, options: CookieOptions) {
-            cookieStore.set(name, value, options)
-          },
-          remove(name: string, options: CookieOptions) {
-            cookieStore.set(name, '', { ...options, maxAge: 0 })
-          },
-        },
-      }
-    )
 
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
     
-    if (authError || !user) {
+    const supabase = await createClient();
+
+    const {  error: authError } = await supabase.auth.getUser();
+    
+    if (authError) {
       console.error('Auth error:', authError)
       return { error: 'Authentication required' }
     }
@@ -42,7 +23,7 @@ export async function createRider(formData: RiderFormData) {
       .from('users')
       .select('id')
       .eq('id', user.id)
-      .single()
+      .single();
 
     if (userQueryError && userQueryError.code !== 'PGRST116') {
       console.error('Error checking existing user:', userQueryError)

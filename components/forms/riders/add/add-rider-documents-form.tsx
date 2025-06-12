@@ -26,10 +26,12 @@ const AddRiderDocumentsForm = () => {
 
     const dropZoneConfig = {
         maxFiles: 5,
-        maxSize: 5 * 1024 * 1024, // 5MB
+        maxSize: 4 * 1024 * 1024, // Changed to 4MB
         accept: {
             'image/*': ['.png', '.jpg', '.jpeg'],
             'application/pdf': ['.pdf'],
+            'image/svg+xml': ['.svg'], // Added SVG explicitly
+            'image/gif': ['.gif'], // Added GIF explicitly
         },
     };
 
@@ -52,6 +54,7 @@ const AddRiderDocumentsForm = () => {
 
     async function onSubmit(values: z.infer<typeof formSchema>) {
         try {
+            console.log("Client-side: Submitting document form."); // Debug log
             const formData = new FormData();
             values.id_card.forEach(file => formData.append('id_card', file));
             values.drivers_license.forEach(file => formData.append('drivers_license', file));
@@ -66,10 +69,11 @@ const AddRiderDocumentsForm = () => {
                 setDriversLicenseFiles([]);
                 setInsuranceFiles([]);
             } else if (result.error) {
+                console.error("Client-side: Server action returned error:", result.error); // Debug log
                 toast.error(result.error);
             }
         } catch (error) {
-            console.error("Client-side form submission error:", error);
+            console.error("Client-side: Unexpected error during form submission:", error); // Debug log
             toast.error("An unexpected error occurred. Please try again.");
         }
     }
@@ -147,7 +151,7 @@ const AddRiderDocumentsForm = () => {
                                         className="relative bg-background rounded-lg p-2"
                                     >
                                         <FileInput
-                                            id="fileInput"
+                                            id="idCardFileInput"
                                             className="outline-dashed outline-1 outline-slate-500 hover:outline-primary transition-all duration-300"
                                         >
                                             <div className="flex items-center justify-center flex-col p-8 w-full ">
@@ -202,7 +206,7 @@ const AddRiderDocumentsForm = () => {
                                         className="relative bg-background rounded-lg p-2"
                                     >
                                         <FileInput
-                                            id="fileInput"
+                                            id="driversLicenseFileInput"
                                             className="outline-dashed outline-1 outline-slate-500 hover:outline-primary transition-all duration-300"
                                         >
                                             <div className="flex items-center justify-center flex-col p-8 w-full ">
@@ -255,7 +259,7 @@ const AddRiderDocumentsForm = () => {
                                         className="relative bg-background rounded-lg p-2"
                                     >
                                         <FileInput
-                                            id="fileInput"
+                                            id="insuranceFileInput"
                                             className="outline-dashed outline-1 outline-slate-500 hover:outline-primary transition-all duration-300"
                                         >
                                             <div className="flex items-center justify-center flex-col p-8 w-full ">

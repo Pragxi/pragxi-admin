@@ -21,7 +21,7 @@ const nextConfig: NextConfig = {
                 hostname: 'robohash.org',
                 port: '',
                 pathname: '/**', // Allow all paths
-            },
+            },   
         ],
     }
 };

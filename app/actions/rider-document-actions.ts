@@ -3,30 +3,32 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import * as z from "zod";
-import { v4 as uuidv4 } from 'uuid'; // For generating unique filenames
+import { v4 as uuidv4 } from 'uuid';
 
 // Define the Zod schema for validation.
 // For file uploads via FormData, the server action will receive `File` objects.
-// However, when passing from client to server action, it's safer to deal with
-// string paths after upload or handle the FormData directly on the server.
-// Since we are uploading to Supabase Storage, we will handle the file objects
-// received directly from the FormData in the server action.
+
 const formSchema = z.object({
     id_card: z.any().refine(files => files.length > 0, "At least one ID card file is required."),
     drivers_license: z.any().refine(files => files.length > 0, "At least one driver's license file is required."),
     insurance: z.any().refine(files => files.length > 0, "At least one insurance file is required."),
 });
 
-// Helper function to upload a single file to Supabase Storage
-async function uploadFileToSupabase(supabase: any, file: File, bucketPath: string) {
+// Helper function to upload a single file to Supabase Storage and return its public URL
+async function uploadFileToSupabase(supabase: any, file: File, bucketPath: string, sectionName: string) {
+    const bucketName = 'rider_documents'; // Explicitly define bucket name here for logging
+    console.log(`Attempting to upload to bucket: ${bucketName} at path: ${bucketPath}`); // Added log
+
     const fileExt = file.name.split('.').pop();
-    const fileName = `${uuidv4()}.${fileExt}`; // Generate a unique filename
+    const fileName = `${sectionName}_${uuidv4()}.${fileExt}`;
     const filePath = `${bucketPath}/${fileName}`;
+
+    console.log(`Uploading file: ${fileName} to bucket path: ${filePath}`);
 
     const { error: uploadError } = await supabase.storage
         .from('rider_documents') // Your Supabase storage bucket name
         .upload(filePath, file, {
-            upsert: false // Set to true if you want to overwrite existing files with the same name
+            upsert: false
         });
 
     if (uploadError) {
@@ -34,14 +36,19 @@ async function uploadFileToSupabase(supabase: any, file: File, bucketPath: strin
         throw new Error(`Failed to upload file: ${uploadError.message}`);
     }
 
-    // Get public URL or internal path if needed. For now, returning internal path.
-    // If you need a public URL, you'd typically get it like this:
-    // const { data: publicUrlData } = supabase.storage.from('rider-documents').getPublicUrl(filePath);
-    // return publicUrlData.publicUrl;
-    return filePath;
+    const { data: publicUrlData } = supabase.storage.from(bucketName).getPublicUrl(filePath);
+
+    if (!publicUrlData || !publicUrlData.publicUrl) {
+        console.error("Failed to get public URL for file:", filePath);
+        throw new Error("Failed to get public URL for uploaded file.");
+    }
+
+    console.log(`File uploaded. Public URL: ${publicUrlData.publicUrl}`);
+    return publicUrlData.publicUrl;
 }
 
 export async function createRiderDocuments(formData: FormData) {
+    console.log("Server action: createRiderDocuments started.");
     try {
         const cookieStore = cookies();
         const supabase = createServerClient(
@@ -61,18 +68,19 @@ export async function createRiderDocuments(formData: FormData) {
                 },
             }
         );
+        console.log("Server action: Supabase client created for documents.");
 
         const { data: { user }, error: userError } = await supabase.auth.getUser();
         if (userError || !user) {
-            console.error("Auth error:", userError);
-            return { error: "Authentication required" };
+            console.error("Server action: Auth error in document upload:", userError);
+            return { error: "Authentication required to upload documents." };
         }
+        console.log("Server action: User found for document upload:", user.id);
 
         const idCardFiles = formData.getAll('id_card') as File[];
         const driversLicenseFiles = formData.getAll('drivers_license') as File[];
         const insuranceFiles = formData.getAll('insurance') as File[];
 
-        // Basic validation for presence of files
         if (idCardFiles.length === 0) {
             return { error: "At least one ID card file is required." };
         }
@@ -83,16 +91,17 @@ export async function createRiderDocuments(formData: FormData) {
             return { error: "At least one insurance file is required." };
         }
 
-        // Upload files and collect their paths
+        console.log("Server action: Starting file uploads...");
         const uploadedIdCardPaths = await Promise.all(
-            idCardFiles.map(file => uploadFileToSupabase(supabase, file, 'id-cards'))
+            idCardFiles.map(file => uploadFileToSupabase(supabase, file, 'id-cards', 'id-card'))
         );
         const uploadedDriversLicensePaths = await Promise.all(
-            driversLicenseFiles.map(file => uploadFileToSupabase(supabase, file, 'drivers-licenses'))
+            driversLicenseFiles.map(file => uploadFileToSupabase(supabase, file, 'drivers-licenses', 'drivers-license'))
         );
         const uploadedInsurancePaths = await Promise.all(
-            insuranceFiles.map(file => uploadFileToSupabase(supabase, file, 'insurance'))
+            insuranceFiles.map(file => uploadFileToSupabase(supabase, file, 'insurance', 'insurance'))
         );
+        console.log("Server action: All files uploaded and public URLs retrieved.");
 
         const { error: dbError } = await supabase
             .from('rider_documents')
@@ -108,13 +117,14 @@ export async function createRiderDocuments(formData: FormData) {
             ]);
 
         if (dbError) {
-            console.error("Supabase insert error:", dbError);
-            return { error: dbError.message };
+            console.error("Server action: Supabase database insert error for documents:", dbError);
+            return { error: `Failed to save document information to database: ${dbError.message}` };
         }
+        console.log("Server action: Document paths inserted into database successfully.");
 
         return { success: true };
     } catch (error) {
-        console.error("Error in createRiderDocuments:", error);
-        return { error: "Failed to upload documents." };
+        console.error("Server action: Unexpected error in createRiderDocuments:", error);
+        return { error: "Failed to upload documents due to an unexpected error." };
     }
 }
