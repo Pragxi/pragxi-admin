@@ -13,39 +13,38 @@ import {
     SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import Image from "next/image";
-import {ChevronDown, Menu, User, UserPlus} from "lucide-react";
-import {cn} from "@/lib/utils";
-import {Link} from 'next-view-transitions';
-import {IdentificationBadge, MoneyWavy, Motorcycle, PresentationChart, ReadCvLogo} from "@phosphor-icons/react";
+import { ChevronDown, Menu, User, UserPlus } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Link } from 'next-view-transitions';
+import { IdentificationBadge, MoneyWavy, Motorcycle, PresentationChart, ReadCvLogo } from "@phosphor-icons/react";
 import AuthenticatedAvatar from "@/components/auth/authenticated-avatar";
-import {useState} from "react";
-import {usePathname} from "next/navigation";
+import { useState } from "react";
+import { usePathname } from "next/navigation";
 
 const menuItems = [
-    {title: "Dashboard", url: "/dashboard", icon: PresentationChart},
+    { title: "Dashboard", url: "/dashboard", icon: PresentationChart },
     {
         title: "Riders",
         icon: Motorcycle,
         url: "/riders",
         submenu: [
-            {title: "All Riders", url: "/riders", icon: User},
-            {title: "Enroll Rider", url: "/riders/enroll", icon: UserPlus},
+            { title: "All Riders", url: "/riders", icon: User },
+            { title: "Enroll Rider", url: "/riders/enroll", icon: UserPlus },
         ],
     },
-    {title: "Passengers", url: "/passengers", icon: User},
-    {title: "Revenue", url: "/revenue", icon: MoneyWavy},
-    {title: "Audit Log", url: "/audit-log", icon: ReadCvLogo},
-    {title: "Manager Admins", url: "/manager-admins", icon: IdentificationBadge},
+    { title: "Passengers", url: "/passengers", icon: User },
+    { title: "Revenue", url: "/revenue", icon: MoneyWavy },
+    { title: "Audit Log", url: "/audit-log", icon: ReadCvLogo },
+    { title: "Manager Admins", url: "/manager-admins", icon: IdentificationBadge },
 ];
 
-export function AppSidebar({collapsed, setCollapsed}: { collapsed: boolean; setCollapsed: (val: boolean) => void }) {
+export function AppSidebar({ collapsed, setCollapsed }: { collapsed: boolean; setCollapsed: (collapsed: boolean) => void }) {
     const [openSubmenus, setOpenSubmenus] = useState(new Set());
     const pathname = usePathname();
 
     const toggleSubmenu = (title: string) => {
         setOpenSubmenus(prev => {
             const newSet = new Set(prev);
-            // eslint-disable-next-line @typescript-eslint/no-unused-expressions
             newSet.has(title) ? newSet.delete(title) : newSet.add(title);
             return newSet;
         });
@@ -71,7 +70,7 @@ export function AppSidebar({collapsed, setCollapsed}: { collapsed: boolean; setC
                         </div>
                     )}
                     <button onClick={() => setCollapsed(!collapsed)} className="p-2 rounded-md hover:bg-gray-200">
-                        <Menu size={20}/>
+                        <Menu size={20} />
                     </button>
                 </div>
             </SidebarHeader>
@@ -97,7 +96,7 @@ export function AppSidebar({collapsed, setCollapsed}: { collapsed: boolean; setC
                                                     )}
                                                 >
                                                     <Link href={item.url}>
-                                                        <item.icon/>
+                                                        <item.icon />
                                                     </Link>
                                                     {!collapsed && <span className="flex-1">{item.title}</span>}
                                                     {!collapsed && (
@@ -110,13 +109,13 @@ export function AppSidebar({collapsed, setCollapsed}: { collapsed: boolean; setC
                                                     <div className="ml-3 overflow-hidden">
                                                         <SidebarMenu
                                                             className="w-full"
-                                                            style={{width: 'calc(100% - 0.30rem)'}}
+                                                            style={{ width: 'calc(100% - 0.30rem)' }}
                                                         >
                                                             {item.submenu.map((sub, index) => {
                                                                 const isSubActive = pathname === sub.url;
                                                                 return (
                                                                     <SidebarMenuItem key={sub.title}
-                                                                                     className={cn(index === 0 && "mt-1")}>
+                                                                        className={cn(index === 0 && "mt-1")}>
                                                                         <SidebarMenuButton
                                                                             asChild
                                                                             className={cn(
@@ -125,10 +124,9 @@ export function AppSidebar({collapsed, setCollapsed}: { collapsed: boolean; setC
                                                                             )}
                                                                         >
                                                                             <Link href={sub.url}
-                                                                                  className="flex items-center gap-2 w-full">
-                                                                                <sub.icon size="32"/>
-                                                                                <span
-                                                                                    className="truncate">{sub.title}</span>
+                                                                                className="flex items-center gap-2 w-full">
+                                                                                <sub.icon size="32" />
+                                                                                <span className="truncate">{sub.title}</span>
                                                                             </Link>
                                                                         </SidebarMenuButton>
                                                                     </SidebarMenuItem>
@@ -147,7 +145,7 @@ export function AppSidebar({collapsed, setCollapsed}: { collapsed: boolean; setC
                                                 )}
                                             >
                                                 <Link href={item.url || "#"} className="flex items-center gap-2 w-full">
-                                                    <item.icon className="w-8 h-8"/>
+                                                    <item.icon className="w-8 h-8" />
                                                     {!collapsed && <span className="truncate">{item.title}</span>}
                                                 </Link>
                                             </SidebarMenuButton>

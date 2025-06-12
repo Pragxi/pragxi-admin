@@ -72,7 +72,7 @@ const Passengers = () => {
         if (storedItemsPerPage) {
             setItemsPerPage(Number(storedItemsPerPage));
         }
-    }, [])
+    }, []);
 
     // Pagination
     const paginatedData = useMemo(() => {
@@ -88,17 +88,16 @@ const Passengers = () => {
     const handleSetItemsPerPage = (value: number) => {
         localStorage.setItem('passengers-itemsPerPage', value.toString());
         setItemsPerPage(value);
-    }
+    };
 
-    // Function to delete a rider with a simulated API call (success or failure randomly simulated)
+    // Function to delete a rider with a simulated API call
     const deletePassenger = () => {
         return new Promise((resolve, reject) => {
             setTimeout(() => {
-                // eslint-disable-next-line @typescript-eslint/no-unused-expressions
                 Math.random() > 0.5 ? reject("Deletion failed") : resolve("Passenger deleted");
             }, 1000);
         });
-    }
+    };
 
     const handleDelete = async () => {
         await toast.promise(
@@ -108,8 +107,8 @@ const Passengers = () => {
                 success: 'Passenger deleted!',
                 error: 'Failed to delete passenger',
             }
-        )
-    }
+        );
+    };
 
     return (
         <div className="flex flex-col w-full space-y-6">
@@ -228,7 +227,7 @@ const Passengers = () => {
                                     <TooltipProvider>
                                         {/* View Rider Button */}
                                         <Tooltip>
-                                            <TooltipTrigger>
+                                            <TooltipTrigger asChild>
                                                 <Button
                                                     variant="ghost"
                                                     size="icon"
@@ -247,17 +246,17 @@ const Passengers = () => {
                                     <TooltipProvider>
                                         {/* Delete Rider Dialog Trigger */}
                                         <Dialog>
-                                            <DialogTrigger>
+                                            <DialogTrigger asChild>
                                                 {/* Delete Rider Button */}
                                                 <Tooltip>
-                                                    <TooltipTrigger>
+                                                    <TooltipTrigger asChild>
                                                         <Button variant="ghost" size="icon" className="rounded-full">
-                                                            <Trash size={32} className="" weight="duotone"/>
+                                                            <Trash size={32} weight="duotone"/>
                                                         </Button>
-                                                        <TooltipContent>
-                                                            Delete
-                                                        </TooltipContent>
                                                     </TooltipTrigger>
+                                                    <TooltipContent>
+                                                        Delete
+                                                    </TooltipContent>
                                                 </Tooltip>
                                             </DialogTrigger>
 
@@ -276,10 +275,10 @@ const Passengers = () => {
                                                 </DialogBody>
                                                 <DialogFooter>
                                                     <div className="flex gap-2">
-                                                        <DialogClose>
+                                                        <DialogClose asChild>
                                                             <Button variant="ghost">Close</Button>
                                                         </DialogClose>
-                                                        <DialogClose>
+                                                        <DialogClose asChild>
                                                             <Button
                                                                 variant="destructive"
                                                                 onClick={handleDelete}>
@@ -290,7 +289,6 @@ const Passengers = () => {
                                                 </DialogFooter>
                                             </DialogContent>
                                         </Dialog>
-
                                     </TooltipProvider>
                                 </div>
                             </TableCell>
@@ -357,10 +355,8 @@ const Passengers = () => {
                     </PaginationItem>
                 </PaginationContent>
             </Pagination>
-
         </div>
     );
 };
 
 export default Passengers;
-

@@ -1,22 +1,24 @@
 "use client";
-import {toast} from "sonner";
-import {useForm} from "react-hook-form";
-import {zodResolver} from "@hookform/resolvers/zod";
+import { toast } from "sonner";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import {Button} from "@/components/ui/button";
-import {Form, FormControl, FormField, FormItem, FormLabel, FormMessage,} from "@/components/ui/form";
-import {Input} from "@/components/ui/input";
-import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue,} from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { createRiderFinanceInformation } from "@/app/actions/rider-finance-actions"; // Import the server action
 
 const formSchema = z.object({
-    service_provider: z.string().min(1),
-    mobile_money_number: z.string().min(1),
+    service_provider: z.string().min(1, "Service provider is required"),
+    mobile_money_number: z.string().min(1, "Mobile money number is required")
+        .regex(/^\d+$/, "Must contain only numbers"),
 });
 
-const relationships = [
-    {label: "MTN", value: "mtn"},
-    {label: "Telecel", value: "Telecel"},
-    {label: "AirtelTigo", value: "AirtelTigo"},
+const serviceProviders = [
+    { label: "MTN", value: "mtn" },
+    { label: "Telecel", value: "telecel" },
+    { label: "AirtelTigo", value: "airteltigo" },
 ];
 
 const AddRiderFinanceInformationForm = () => {
@@ -24,20 +26,23 @@ const AddRiderFinanceInformationForm = () => {
         resolver: zodResolver(formSchema),
         defaultValues: {
             service_provider: "mtn",
+            mobile_money_number: "",
         },
     });
 
-    function onSubmit(values: z.infer<typeof formSchema>) {
+    async function onSubmit(values: z.infer<typeof formSchema>) {
         try {
-            console.log(values);
-            toast.success(
-                <pre className="mt-2 w-[340px] rounded-md bg-slate-950 p-4">
-                    <code className="text-white">{JSON.stringify(values, null, 2)}</code>
-                </pre>
-            );
+            const result = await createRiderFinanceInformation(values);
+
+            if (result.success) {
+                toast.success("Financial information saved successfully");
+                form.reset(); // Optionally reset the form on success
+            } else if (result.error) {
+                toast.error(result.error);
+            }
         } catch (error) {
-            console.error("Form submission error", error);
-            toast.error("Failed to submit the form. Please try again.");
+            console.error("Client-side form submission error:", error);
+            toast.error("An unexpected error occurred. Please try again.");
         }
     }
 
@@ -47,42 +52,41 @@ const AddRiderFinanceInformationForm = () => {
                 onSubmit={form.handleSubmit(onSubmit)}
                 className="space-y-4 my-3 motion-preset-blur-right delay-100"
             >
-                {/* Vehicle Information */}
                 <div className="grid grid-cols-2 gap-4">
                     <FormField
                         control={form.control}
                         name="service_provider"
-                        render={({field}) => (
+                        render={({ field }) => (
                             <FormItem>
                                 <FormLabel>Service Provider</FormLabel>
                                 <Select onValueChange={field.onChange} defaultValue={field.value}>
                                     <FormControl>
                                         <SelectTrigger className="w-full">
-                                            <SelectValue placeholder="Select relationship"/>
+                                            <SelectValue placeholder="Select service provider" />
                                         </SelectTrigger>
                                     </FormControl>
                                     <SelectContent>
-                                        {relationships.map((rel) => (
-                                            <SelectItem key={rel.value} value={rel.value}>
-                                                {rel.label}
+                                        {serviceProviders.map((provider) => (
+                                            <SelectItem key={provider.value} value={provider.value}>
+                                                {provider.label}
                                             </SelectItem>
                                         ))}
                                     </SelectContent>
                                 </Select>
-                                <FormMessage/>
+                                <FormMessage />
                             </FormItem>
                         )}
                     />
                     <FormField
                         control={form.control}
                         name="mobile_money_number"
-                        render={({field}) => (
+                        render={({ field }) => (
                             <FormItem>
                                 <FormLabel>Mobile Money Number</FormLabel>
                                 <FormControl>
                                     <Input placeholder="e.g. 233248999999" {...field} />
                                 </FormControl>
-                                <FormMessage/>
+                                <FormMessage />
                             </FormItem>
                         )}
                     />

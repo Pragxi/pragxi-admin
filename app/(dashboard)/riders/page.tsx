@@ -93,7 +93,7 @@ const Riders = () => {
     const deleteRider = () => {
         return new Promise((resolve, reject) => {
             setTimeout(() => {
-                // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+               
                 Math.random() > 0.5 ? reject("Deletion failed") : resolve("Rider deleted");
             }, 1000);
         });
