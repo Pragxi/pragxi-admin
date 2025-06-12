@@ -8,7 +8,8 @@ export const updateMetaData = async () => {
     const supabase = await createClient();
     const response = await supabase.auth.updateUser({
         data: {
-            user_role: "admin"
+            user_role: "admin",
+            user_type: "admin"
         }
     });
 
