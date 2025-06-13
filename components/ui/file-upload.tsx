@@ -1,7 +1,7 @@
 "use client";
 
-import { Input } from "@/components/ui/input";
-import { cn } from "@/lib/utils";
+import {Input} from "@/components/ui/input";
+import {cn} from "@/lib/utils";
 import {
     createContext,
     Dispatch,
@@ -15,10 +15,10 @@ import {
     useRef,
     useState
 } from "react";
-import { DropzoneOptions, DropzoneState, FileRejection, useDropzone } from "react-dropzone";
-import { toast } from "sonner";
-import { Trash2 as RemoveIcon } from "lucide-react";
-import { buttonVariants } from "@/components/ui/button";
+import {DropzoneOptions, DropzoneState, FileRejection, useDropzone} from "react-dropzone";
+import {toast} from "sonner";
+import {Trash2 as RemoveIcon} from "lucide-react";
+import {buttonVariants} from "@/components/ui/button";
 
 type DirectionOptions = "rtl" | "ltr" | undefined;
 
@@ -73,7 +73,7 @@ export const FileUploader = forwardRef<
         const [isLOF, setIsLOF] = useState(false);
         const [activeIndex, setActiveIndex] = useState(-1);
         const inputRef = useRef<HTMLInputElement>(null);
-        
+
         const {
             accept = {
                 "image/*": [".jpg", ".jpeg", ".png", ".gif"],
@@ -249,8 +249,8 @@ FileUploader.displayName = "FileUploader";
 export const FileUploaderContent = forwardRef<
     HTMLDivElement,
     HTMLAttributes<HTMLDivElement>
->(({ children, className, ...props }, ref) => {
-    const { orientation } = useFileUpload();
+>(({children, className, ...props}, ref) => {
+    const {orientation} = useFileUpload();
     const containerRef = useRef<HTMLDivElement>(null);
 
     return (
@@ -279,15 +279,17 @@ FileUploaderContent.displayName = "FileUploaderContent";
 export const FileUploaderItem = forwardRef<
     HTMLDivElement,
     HTMLAttributes<HTMLDivElement>
->(({ className, children, ...props }, ref) => {
-    const { removeFileFromSet, activeIndex, direction } = useFileUpload();
+>(({className, children, ...props}, ref) => {
+    const {removeFileFromSet, activeIndex, direction} = useFileUpload();
+    // @ts-ignore
     const isSelected = activeIndex === Number(props["data-index"]);
-    
+
+
     return (
         <div
             ref={ref}
             className={cn(
-                buttonVariants({ variant: "ghost" }),
+                buttonVariants({variant: "ghost"}),
                 "h-6 p-1 justify-between cursor-pointer relative",
                 className,
                 isSelected ? "bg-muted" : "",
@@ -303,9 +305,13 @@ export const FileUploaderItem = forwardRef<
                     "absolute",
                     direction === "rtl" ? "top-1 left-1" : "top-1 right-1",
                 )}
+                // @ts-ignore
                 onClick={() => removeFileFromSet(Number(props["data-index"]))}
             >
-                <span className="sr-only">remove item {props["data-index"]}</span>
+                <span className="sr-only">remove item {
+                    // @ts-ignore
+                    props["data-index"]
+                }</span>
                 <RemoveIcon className="w-4 h-4 hover:stroke-destructive duration-200 ease-in-out"/>
             </button>
         </div>
@@ -317,8 +323,8 @@ FileUploaderItem.displayName = "FileUploaderItem";
 export const FileInput = forwardRef<
     HTMLDivElement,
     HTMLAttributes<HTMLDivElement>
->(({ className, children, ...props }, ref) => {
-    const { dropzoneState, isFileTooBig, isLOF } = useFileUpload();
+>(({className, children, ...props}, ref) => {
+    const {dropzoneState, isFileTooBig, isLOF} = useFileUpload();
     const rootProps = isLOF ? {} : dropzoneState.getRootProps();
     return (
         <div

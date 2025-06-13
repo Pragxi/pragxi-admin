@@ -5,49 +5,18 @@ import {zodResolver} from "@hookform/resolvers/zod";
 import * as z from "zod";
 import {cn} from "@/lib/utils";
 import {Button} from "@/components/ui/button";
-import {
-    Form,
-    FormControl,
-    FormField,
-    FormItem,
-    FormLabel,
-    FormMessage,
-} from "@/components/ui/form";
+import {Form, FormControl, FormField, FormItem, FormLabel, FormMessage,} from "@/components/ui/form";
 import {Input} from "@/components/ui/input";
 import {format} from "date-fns";
 import {Popover, PopoverContent, PopoverTrigger} from "@/components/ui/popover";
 import {Calendar} from "@/components/ui/calendar";
-import {Calendar as CalendarIcon, Check, ChevronsUpDown} from "lucide-react";
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select";
-import {
-    Command,
-    CommandEmpty,
-    CommandGroup,
-    CommandInput,
-    CommandItem,
-    CommandList,
-} from "@/components/ui/command";
-import { createRider } from '@/app/actions/rider'
-import { useRouter } from 'next/navigation'
-
-const formSchema = z.object({
-    first_name: z.string().min(1),
-    last_name: z.string().min(1),
-    phone_number: z.string().min(1),
-    email: z.string().email(),
-    dob: z.coerce.date(),
-    marital_status: z.string(),
-    gender: z.string(),
-    nationality: z.string(),
-    city: z.string().min(1),
-    gps_address: z.string().min(1),
-});
+import {Calendar as CalendarIcon, Check, ChevronsUpDown, Loader2} from "lucide-react";
+import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue,} from "@/components/ui/select";
+import {Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList,} from "@/components/ui/command";
+import {addRiderPersonalAction} from "@/app/(server-actions)/(riders-actions)/add-rider-personal.action";
+import {RiderInfoSchema} from "@/types/rider";
+import {useMutation} from "@tanstack/react-query";
+import {useState} from "react";
 
 const countries = [
     {label: "Ghana", value: "ghana"},
@@ -58,9 +27,10 @@ const countries = [
 ];
 
 const AddRiderPersonalInformationForm = () => {
-    const router = useRouter()
-    const form = useForm<z.infer<typeof formSchema>>({
-        resolver: zodResolver(formSchema),
+    const [hideSubmitButton, setHideSubmitButton] = useState(false);
+
+    const form = useForm<z.infer<typeof RiderInfoSchema>>({
+        resolver: zodResolver(RiderInfoSchema),
         defaultValues: {
             first_name: "",
             last_name: "",
@@ -68,40 +38,49 @@ const AddRiderPersonalInformationForm = () => {
             email: "",
             marital_status: "",
             gender: "",
-            nationality: "",
+            nationality: "ghana",
             city: "",
             gps_address: "",
         },
     })
 
-    const onSubmit = async (values: z.infer<typeof formSchema>) => {
-        try {
-            console.log('Form values:', values)
+    const {mutate, isPending} = useMutation({
+        mutationFn: addRiderPersonalAction,
+        onSuccess: (data) => {
+            if (data.error || !data.success) {
+                toast.error(data.error, {
+                    closeButton: true
+                });
+            } else {
+                setHideSubmitButton(true);
+                // Store the user_id in localStorage so that the other tabs can use it to insert the rest of the user data
+                localStorage.setItem("added-rider-id", data?.data?.user_id!);
 
-            const result = await createRider(values)
-
-            if (result.error) {
-                console.error('Error:', result.error)
-                toast.error(result.error)
-                return
+                toast.success("Rider created successfully", {
+                    closeButton: true
+                });
             }
+        },
+        onError: () => {
+            toast.error("Failed to create rider", {
+                closeButton: true
+            });
+        },
+    });
 
-            console.log('Success:', result.data)
-            toast.success('Rider created successfully')
-            
-            // Optionally redirect to the rider's profile or list
-            router.push('/riders')
-            router.refresh()
-        } catch (error) {
-            console.error('Submission error:', error)
-            toast.error('Failed to create rider')
-        }
-    }
+    const onSubmit = async (values: z.infer<typeof RiderInfoSchema>) => {
+        localStorage.setItem("added-rider-id", "");
+        mutate(values);
+    };
+
 
     return (
         <Form {...form}>
             <form
-                onSubmit={form.handleSubmit(onSubmit)}
+                onSubmit={(e) => {
+                    e.preventDefault(); // extra safety
+                    form.handleSubmit(onSubmit)(e);
+                }}
                 className="space-y-4 my-3 motion-preset-blur-right delay-100"
             >
                 {/* First Name & Last Name */}
@@ -115,6 +94,7 @@ const AddRiderPersonalInformationForm = () => {
                                     <FormLabel>First Name</FormLabel>
                                     <FormControl>
                                         <Input
+                                            disabled={isPending || hideSubmitButton}
                                             placeholder="eg. John"
                                             type="text"
                                             className="w-full"
@@ -135,6 +115,7 @@ const AddRiderPersonalInformationForm = () => {
                                     <FormLabel>Last Name</FormLabel>
                                     <FormControl>
                                         <Input
+                                            disabled={isPending || hideSubmitButton}
                                             placeholder="eg. Doe"
                                             type="text"
                                             className="w-full"
@@ -159,6 +140,7 @@ const AddRiderPersonalInformationForm = () => {
                                     <FormLabel>Phone Number</FormLabel>
                                     <FormControl>
                                         <Input
+                                            disabled={isPending || hideSubmitButton}
                                             placeholder="eg. 0244567885"
                                             type="text"
                                             className="w-full"
@@ -179,6 +161,7 @@ const AddRiderPersonalInformationForm = () => {
                                     <FormLabel>Email Address</FormLabel>
                                     <FormControl>
                                         <Input
+                                            disabled={isPending || hideSubmitButton}
                                             placeholder="eg. johndoe@email.com"
                                             type="email"
                                             className="w-full"
@@ -205,6 +188,7 @@ const AddRiderPersonalInformationForm = () => {
                                         <PopoverTrigger asChild>
                                             <FormControl>
                                                 <Button
+                                                    disabled={isPending || hideSubmitButton}
                                                     variant={"outline"}
                                                     className={cn(
                                                         "w-full pl-3 text-left font-normal",
@@ -241,7 +225,8 @@ const AddRiderPersonalInformationForm = () => {
                             render={({field}) => (
                                 <FormItem>
                                     <FormLabel>Marital Status</FormLabel>
-                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                    <Select onValueChange={field.onChange} defaultValue={field.value}
+                                            disabled={isPending || hideSubmitButton}>
                                         <FormControl>
                                             <SelectTrigger className="w-full">
                                                 <SelectValue placeholder="Select Marital Status"/>
@@ -270,7 +255,8 @@ const AddRiderPersonalInformationForm = () => {
                             render={({field}) => (
                                 <FormItem>
                                     <FormLabel>Gender</FormLabel>
-                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                    <Select onValueChange={field.onChange} defaultValue={field.value}
+                                            disabled={isPending || hideSubmitButton}>
                                         <FormControl>
                                             <SelectTrigger className="w-full">
                                                 <SelectValue placeholder="Select Gender"/>
@@ -297,6 +283,7 @@ const AddRiderPersonalInformationForm = () => {
                                         <PopoverTrigger asChild>
                                             <FormControl>
                                                 <Button
+                                                    disabled={isPending || hideSubmitButton}
                                                     variant="outline"
                                                     role="combobox"
                                                     className={cn(
@@ -361,6 +348,7 @@ const AddRiderPersonalInformationForm = () => {
                                     <FormLabel>City/Town</FormLabel>
                                     <FormControl>
                                         <Input
+                                            disabled={isPending || hideSubmitButton}
                                             placeholder="eg. Mpraeso"
                                             type="text"
                                             className="w-full"
@@ -381,6 +369,7 @@ const AddRiderPersonalInformationForm = () => {
                                     <FormLabel>GPS Address</FormLabel>
                                     <FormControl>
                                         <Input
+                                            disabled={isPending || hideSubmitButton}
                                             placeholder="GW-178-937"
                                             type="text"
                                             className="w-full"
@@ -393,10 +382,22 @@ const AddRiderPersonalInformationForm = () => {
                         />
                     </div>
                 </div>
-                <Button type="submit">Submit</Button>
+                {
+                    !hideSubmitButton && <Button type="submit" disabled={isPending || hideSubmitButton}>{
+                        isPending ?
+                            <>
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin"/>
+                                <span>Submitting</span>
+                            </>
+                            : "Submit"
+                    }
+                    </Button>
+                }
             </form>
         </Form>
     );
 };
 
 export default AddRiderPersonalInformationForm;
+
+

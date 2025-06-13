@@ -31,7 +31,7 @@ export async function middleware(request: NextRequest) {
     )
 
     // Refresh session if expired
-    await supabase.auth.getSession()
+    // await supabase.auth.getSession()
 
     // Get user
     const { data: { user } } = await supabase.auth.getUser()

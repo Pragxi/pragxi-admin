@@ -109,7 +109,7 @@ const ViewRiderDocumentsForm = () => {
                                         {idCardFiles &&
                                             idCardFiles.length > 0 &&
                                             idCardFiles.map((file, i) => (
-                                                <FileUploaderItem key={i} index={i}>
+                                                <FileUploaderItem key={i}>
                                                     <Paperclip className="h-4 w-4 stroke-current" />
                                                     <span>{file.name}</span>
                                                 </FileUploaderItem>
@@ -123,7 +123,7 @@ const ViewRiderDocumentsForm = () => {
                     )}
                 />
 
-                {/* Driver's License Field */}
+                {/* Driver's license Field */}
                 <FormField
                     control={form.control}
                     name="drivers_license"
@@ -161,7 +161,7 @@ const ViewRiderDocumentsForm = () => {
                                         {driversLicenseFiles &&
                                             driversLicenseFiles.length > 0 &&
                                             driversLicenseFiles.map((file, i) => (
-                                                <FileUploaderItem key={i} index={i}>
+                                                <FileUploaderItem key={i}>
                                                     <Paperclip className="h-4 w-4 stroke-current" />
                                                     <span>{file.name}</span>
                                                 </FileUploaderItem>
@@ -213,7 +213,7 @@ const ViewRiderDocumentsForm = () => {
                                         {insuranceFiles &&
                                             insuranceFiles.length > 0 &&
                                             insuranceFiles.map((file, i) => (
-                                                <FileUploaderItem key={i} index={i}>
+                                                <FileUploaderItem key={i}>
                                                     <Paperclip className="h-4 w-4 stroke-current" />
                                                     <span>{file.name}</span>
                                                 </FileUploaderItem>

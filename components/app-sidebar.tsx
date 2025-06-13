@@ -38,7 +38,8 @@ const menuItems = [
     { title: "Manager Admins", url: "/manager-admins", icon: IdentificationBadge },
 ];
 
-export function AppSidebar({ collapsed, setCollapsed }: { collapsed: boolean; setCollapsed: (collapsed: boolean) => void }) {
+
+export function AppSidebar({ collapsed, setCollapsed }: { collapsed: boolean; setCollapsed: (value: boolean) => void }) {
     const [openSubmenus, setOpenSubmenus] = useState(new Set());
     const pathname = usePathname();
 

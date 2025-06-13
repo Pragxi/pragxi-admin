@@ -1,50 +1,57 @@
 "use client";
-import { toast } from "sonner";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
+import {useState} from "react";
+import {toast} from "sonner";
+import {useForm} from "react-hook-form";
+import {zodResolver} from "@hookform/resolvers/zod";
+import {useMutation} from "@tanstack/react-query";
 import * as z from "zod";
-import { Button } from "@/components/ui/button";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { createRiderFinanceInformation } from "@/app/actions/rider-finance-actions"; // Import the server action
 
-const formSchema = z.object({
-    service_provider: z.string().min(1, "Service provider is required"),
-    mobile_money_number: z.string().min(1, "Mobile money number is required")
-        .regex(/^\d+$/, "Must contain only numbers"),
-});
+import {Button} from "@/components/ui/button";
+import {Form, FormControl, FormField, FormItem, FormLabel, FormMessage,} from "@/components/ui/form";
+import {Input} from "@/components/ui/input";
+import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue,} from "@/components/ui/select";
+import {Loader2} from "lucide-react";
+
+import {createRiderFinanceInformation} from "@/app/(server-actions)/(riders-actions)/rider-finance.actions";
+import {RiderFinanceSchema} from "@/types/rider";
 
 const serviceProviders = [
-    { label: "MTN", value: "mtn" },
-    { label: "Telecel", value: "telecel" },
-    { label: "AirtelTigo", value: "airteltigo" },
+    {label: "MTN", value: "mtn"},
+    {label: "Telecel", value: "telecel"},
+    {label: "AirtelTigo", value: "airteltigo"},
 ];
 
 const AddRiderFinanceInformationForm = () => {
-    const form = useForm<z.infer<typeof formSchema>>({
-        resolver: zodResolver(formSchema),
+    const [hideSubmitButton, setHideSubmitButton] = useState(false);
+
+    const form = useForm<z.infer<typeof RiderFinanceSchema>>({
+        resolver: zodResolver(RiderFinanceSchema),
         defaultValues: {
             service_provider: "mtn",
             mobile_money_number: "",
+            rider_id: localStorage.getItem("added-rider-id") || "",
         },
     });
 
-    async function onSubmit(values: z.infer<typeof formSchema>) {
-        try {
-            const result = await createRiderFinanceInformation(values);
-
-            if (result.success) {
+    const {mutate, isPending} = useMutation({
+        mutationFn: createRiderFinanceInformation,
+        onSuccess: (data) => {
+            if (data.success) {
                 toast.success("Financial information saved successfully");
-                form.reset(); // Optionally reset the form on success
-            } else if (result.error) {
-                toast.error(result.error);
+                form.reset();
+                setHideSubmitButton(true);
+            } else if (data.error) {
+                toast.error(data.error);
             }
-        } catch (error) {
-            console.error("Client-side form submission error:", error);
+        },
+        onError: () => {
             toast.error("An unexpected error occurred. Please try again.");
-        }
-    }
+        },
+    });
+
+    const onSubmit = (values: z.infer<typeof RiderFinanceSchema>) => {
+        mutate(values);
+    };
 
     return (
         <Form {...form}>
@@ -56,13 +63,17 @@ const AddRiderFinanceInformationForm = () => {
                     <FormField
                         control={form.control}
                         name="service_provider"
-                        render={({ field }) => (
+                        render={({field}) => (
                             <FormItem>
                                 <FormLabel>Service Provider</FormLabel>
-                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <Select
+                                    onValueChange={field.onChange}
+                                    defaultValue={field.value}
+                                    disabled={isPending || hideSubmitButton}
+                                >
                                     <FormControl>
                                         <SelectTrigger className="w-full">
-                                            <SelectValue placeholder="Select service provider" />
+                                            <SelectValue placeholder="Select service provider"/>
                                         </SelectTrigger>
                                     </FormControl>
                                     <SelectContent>
@@ -73,26 +84,41 @@ const AddRiderFinanceInformationForm = () => {
                                         ))}
                                     </SelectContent>
                                 </Select>
-                                <FormMessage />
+                                <FormMessage/>
                             </FormItem>
                         )}
                     />
                     <FormField
                         control={form.control}
                         name="mobile_money_number"
-                        render={({ field }) => (
+                        render={({field}) => (
                             <FormItem>
                                 <FormLabel>Mobile Money Number</FormLabel>
                                 <FormControl>
-                                    <Input placeholder="e.g. 233248999999" {...field} />
+                                    <Input
+                                        placeholder="e.g. 233248999999"
+                                        {...field}
+                                        disabled={isPending || hideSubmitButton}
+                                    />
                                 </FormControl>
-                                <FormMessage />
+                                <FormMessage/>
                             </FormItem>
                         )}
                     />
                 </div>
 
-                <Button type="submit">Submit</Button>
+                {!hideSubmitButton && (
+                    <Button type="submit" disabled={isPending}>
+                        {isPending ? (
+                            <>
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin"/>
+                                Submitting
+                            </>
+                        ) : (
+                            "Submit"
+                        )}
+                    </Button>
+                )}
             </form>
         </Form>
     );

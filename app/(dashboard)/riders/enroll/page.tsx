@@ -1,11 +1,32 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, {useState} from 'react';
 import {Tabs, TabsContent, TabsList, TabsTrigger} from "@/components/ui/tabs";
-import AddRiderPersonalInformationForm from "@/components/forms/riders/add/add-rider-personal-information-form";
-import AddRiderSecurityInformationForm from '@/components/forms/riders/add/add-rider-security-information-form';
-import AddRiderFinanceInformationForm from "@/components/forms/riders/add/add-rider-finance-information-form";
-import AddRiderDocumentsForm from "@/components/forms/riders/add/add-rider-documents-form";
+// import AddRiderPersonalInformationForm from "@/components/forms/riders/add/add-rider-personal-information-form";
+// import AddRiderSecurityInformationForm from '@/components/forms/riders/add/add-rider-security-information-form';
+// import AddRiderFinanceInformationForm from "@/components/forms/riders/add/add-rider-finance-information-form";
+// import AddRiderDocumentsForm from "@/components/forms/riders/add/add-rider-documents-form";
+import dynamic from "next/dynamic";
+
+const AddRiderPersonalInformationForm = dynamic(
+    () => import('@/components/forms/riders/add/add-rider-personal-information-form'),
+    { ssr: false }
+);
+
+const AddRiderSecurityInformationForm = dynamic(
+    () => import('@/components/forms/riders/add/add-rider-security-information-form'),
+    { ssr: false }
+);
+
+const AddRiderFinanceInformationForm = dynamic(
+    () => import('@/components/forms/riders/add/add-rider-finance-information-form'),
+    { ssr: false }
+);
+
+const AddRiderDocumentsForm = dynamic(
+    () => import('@/components/forms/riders/add/add-rider-documents-form'),
+    { ssr: false }
+);
 
 const EnrollRider = () => {
     const [activeTab, setActiveTab] = useState("personal_information");

@@ -41,6 +41,7 @@ export default [
       "no-undef": "error",
       
       // Unused vars rules
+      "no-unused-vars": "off",
       "@typescript-eslint/no-unused-vars": [
         "warn",
         { 
@@ -59,7 +60,7 @@ export default [
       "@next/next/no-html-link-for-pages": "off",
       
       // Disable unused eslint-disable warnings
-      "eslint-comments/no-unused-disable": "error"
+      // "eslint-comments/no-unused-disable": "error"
     }
   },
   {
