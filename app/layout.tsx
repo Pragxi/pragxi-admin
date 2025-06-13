@@ -4,6 +4,8 @@ import "./globals.css";
 import {ReactNode} from "react";
 import {ViewTransitions} from 'next-view-transitions'
 import {Providers} from "@/lib/providers";
+import {createClient} from "@/utils/supabase/server";
+import {redirect} from "next/navigation";
 
 const poppins = Poppins({
     subsets: ["latin"],
@@ -16,7 +18,16 @@ export const metadata: Metadata = {
     description: "Manage Pragxi Operations",
 };
 
-export default function RootLayout({children}: Readonly<{ children: ReactNode }>) {
+export default async function RootLayout({children}: Readonly<{ children: ReactNode }>) {
+
+    const supabase = await createClient();
+
+    const {data: {user}} = await supabase.auth.getUser()
+
+    if (user) {
+        redirect('/dashboard')
+    }
+
     return (
         <ViewTransitions>
             <html lang="en" suppressHydrationWarning>

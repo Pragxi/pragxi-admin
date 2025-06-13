@@ -13,6 +13,7 @@ const compat = new FlatCompat({
   baseDirectory: __dirname,
 });
 
+// eslint-disable-next-line import/no-anonymous-default-export
 export default [
   js.configs.recommended,
   {

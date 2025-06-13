@@ -38,7 +38,6 @@ const AddRiderFinanceInformationForm = () => {
         onSuccess: (data) => {
             if (data.success) {
                 toast.success("Financial information saved successfully");
-                form.reset();
                 setHideSubmitButton(true);
             } else if (data.error) {
                 toast.error(data.error);
