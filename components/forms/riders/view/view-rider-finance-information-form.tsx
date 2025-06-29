@@ -1,96 +1,39 @@
 "use client";
-import {toast} from "sonner";
-import {useForm} from "react-hook-form";
-import {zodResolver} from "@hookform/resolvers/zod";
-import * as z from "zod";
-import {Button} from "@/components/ui/button";
-import {Form, FormControl, FormField, FormItem, FormLabel, FormMessage,} from "@/components/ui/form";
-import {Input} from "@/components/ui/input";
-import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue,} from "@/components/ui/select";
+import React from 'react';
 
-const formSchema = z.object({
-    service_provider: z.string().min(1),
-    mobile_money_number: z.string().min(1),
-});
+interface ViewRiderFinanceInformationFormProps {
+    rider: any;
+}
 
-const relationships = [
-    {label: "MTN", value: "mtn"},
-    {label: "Telecel", value: "Telecel"},
-    {label: "AirtelTigo", value: "AirtelTigo"},
-];
-
-const ViewRiderFinanceInformationForm = () => {
-    const form = useForm<z.infer<typeof formSchema>>({
-        resolver: zodResolver(formSchema),
-        defaultValues: {
-            service_provider: "mtn",
-        },
-    });
-
-    function onSubmit(values: z.infer<typeof formSchema>) {
-        try {
-            console.log(values);
-            toast.success(
-                <pre className="mt-2 w-[340px] rounded-md bg-slate-950 p-4">
-                    <code className="text-white">{JSON.stringify(values, null, 2)}</code>
-                </pre>
-            );
-        } catch (error) {
-            console.error("Form submission error", error);
-            toast.error("Failed to submit the form. Please try again.");
-        }
-    }
-
+const ViewRiderFinanceInformationForm: React.FC<ViewRiderFinanceInformationFormProps> = ({ rider }) => {
+    const finance = rider?.finance || {};
+    
+    const getServiceProviderLabel = (value: string) => {
+        const providers = {
+            mtn: "MTN",
+            telecel: "Telecel",
+            airteltigo: "AirtelTigo"
+        };
+        return providers[value as keyof typeof providers] || value;
+    };
+    
     return (
-        <Form {...form}>
-            <form
-                onSubmit={form.handleSubmit(onSubmit)}
-                className="space-y-4 my-3 motion-preset-blur-right delay-100"
-            >
-                {/* Vehicle Information */}
-                <div className="grid grid-cols-2 gap-4">
-                    <FormField
-                        control={form.control}
-                        name="service_provider"
-                        render={({field}) => (
-                            <FormItem>
-                                <FormLabel>Service Provider</FormLabel>
-                                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                    <FormControl>
-                                        <SelectTrigger className="w-full">
-                                            <SelectValue placeholder="Select relationship"/>
-                                        </SelectTrigger>
-                                    </FormControl>
-                                    <SelectContent>
-                                        {relationships.map((rel) => (
-                                            <SelectItem key={rel.value} value={rel.value}>
-                                                {rel.label}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                                <FormMessage/>
-                            </FormItem>
-                        )}
-                    />
-                    <FormField
-                        control={form.control}
-                        name="mobile_money_number"
-                        render={({field}) => (
-                            <FormItem>
-                                <FormLabel>Mobile Money Number</FormLabel>
-                                <FormControl>
-                                    <Input placeholder="e.g. 233248999999" {...field} />
-                                </FormControl>
-                                <FormMessage/>
-                            </FormItem>
-                        )}
-                    />
+        <div className="space-y-6 my-3 motion-preset-blur-right delay-100">
+            <div className="grid grid-cols-2 gap-4">
+                <div>
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Service Provider</label>
+                    <div className="mt-1 p-3 bg-gray-50 dark:bg-gray-800 rounded-md border">
+                        {finance.service_provider ? getServiceProviderLabel(finance.service_provider) : "Not provided"}
+                    </div>
                 </div>
-
-                <Button type="submit">Submit</Button>
-            </form>
-        </Form>
+                <div>
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Mobile Money Number</label>
+                    <div className="mt-1 p-3 bg-gray-50 dark:bg-gray-800 rounded-md border">
+                        {finance.mobile_money_number || "Not provided"}
+                    </div>
+                </div>
+            </div>
+        </div>
     );
 };
 

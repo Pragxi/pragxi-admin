@@ -3,9 +3,6 @@ import {useEffect, useMemo, useState} from 'react';
 import {Input} from '@/components/ui/input';
 import {Button} from '@/components/ui/button';
 import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow,} from '@/components/ui/table';
-import {Badge} from '@/components/ui/badge';
-import Image from 'next/image';
-import {generateRiders} from "@/dummy/riders";
 import {Trash} from '@phosphor-icons/react/dist/ssr';
 import {
     Pagination,
@@ -17,7 +14,7 @@ import {
 } from '@/components/ui/pagination';
 import {Tooltip, TooltipContent, TooltipProvider, TooltipTrigger,} from "@/components/ui/tooltip"
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from '@/components/ui/select';
-import {Eye, Star} from "@phosphor-icons/react";
+import {Eye} from "@phosphor-icons/react";
 import {
     Dialog,
     DialogClose,
@@ -31,47 +28,76 @@ import {
 import {DialogBody} from "next/dist/client/components/react-dev-overlay/ui/components/dialog";
 import toast from "react-hot-toast";
 import {redirect} from "next/navigation";
-import {Rider} from "@/types/rider";
 import {Link} from "next-view-transitions";
-
-// Dummy data
-const riders = generateRiders(27);
+import {getAllRiders} from "@/app/(server-actions)/(riders-actions)/get-all-riders.action";
 
 const Riders = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [sortConfig, setSortConfig] = useState({key: '', direction: ''});
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(10);
+    const [riders, setRiders] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState('');
+
+    useEffect(() => {
+        const fetchRiders = async () => {
+            setLoading(true);
+            setError('');
+            try {
+                const result = await getAllRiders();
+                if (result.error) {
+                    setError(result.error);
+                } else if (result.data) {
+                    setRiders(result.data);
+                }
+            } catch (_err) {
+                setError('Failed to fetch riders.');
+            }
+            setLoading(false);
+        };
+        fetchRiders();
+        const storedItemsPerPage = localStorage.getItem('riders-itemsPerPage');
+        if (storedItemsPerPage) {
+            setItemsPerPage(Number(storedItemsPerPage));
+        }
+    }, []);
 
     // Search filter
     const filteredData = useMemo(() => {
-        return riders.filter(
-            (rider) =>
-                rider.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                rider.vehicleNumber.toLowerCase().includes(searchTerm.toLowerCase())
-        );
-    }, [searchTerm]);
+        return riders.filter((rider) => {
+            const name = `${rider.first_name || ''} ${rider.last_name || ''}`.toLowerCase();
+            const vehicleNumber = rider.security?.vehicle_number?.toLowerCase() || '';
+            return (
+                name.includes(searchTerm.toLowerCase()) ||
+                vehicleNumber.includes(searchTerm.toLowerCase())
+            );
+        });
+    }, [searchTerm, riders]);
 
     // Sorting
     const sortedData = useMemo(() => {
         if (!sortConfig.key) return filteredData;
-        return [...filteredData].sort((a: Rider, b: Rider) => {
-            if (a[sortConfig.key] < b[sortConfig.key]) {
+        return [...filteredData].sort((a, b) => {
+            let aValue = a[sortConfig.key];
+            let bValue = b[sortConfig.key];
+            if (sortConfig.key === 'name') {
+                aValue = `${a.first_name || ''} ${a.last_name || ''}`;
+                bValue = `${b.first_name || ''} ${b.last_name || ''}`;
+            }
+            if (sortConfig.key === 'vehicleNumber') {
+                aValue = a.security?.vehicle_number || '';
+                bValue = b.security?.vehicle_number || '';
+            }
+            if (aValue < bValue) {
                 return sortConfig.direction === 'asc' ? -1 : 1;
             }
-            if (a[sortConfig.key] > b[sortConfig.key]) {
+            if (aValue > bValue) {
                 return sortConfig.direction === 'asc' ? 1 : -1;
             }
             return 0;
         });
     }, [filteredData, sortConfig]);
-
-    useEffect(() => {
-        const storedItemsPerPage = localStorage.getItem('riders-itemsPerPage');
-        if (storedItemsPerPage) {
-            setItemsPerPage(Number(storedItemsPerPage));
-        }
-    }, [])
 
     // Pagination
     const paginatedData = useMemo(() => {
@@ -93,7 +119,6 @@ const Riders = () => {
     const deleteRider = () => {
         return new Promise((resolve, reject) => {
             setTimeout(() => {
-               
                 Math.random() > 0.5 ? reject("Deletion failed") : resolve("Rider deleted");
             }, 1000);
         });
@@ -158,139 +183,110 @@ const Riders = () => {
                 </Select>
             </div>
 
+            {/* Error Message */}
+            {error && (
+                <div className="text-red-500 font-semibold mb-2">{error}</div>
+            )}
+
             {/* Riders Table */}
             <Table className="motion-preset-blur-up" suppressHydrationWarning>
                 <TableHeader>
                     <TableRow className="bg-gray-100 dark:bg-zinc-800 cursor-pointer rounded-2xl">
-                        <TableHead>Avatar</TableHead>
-                        <TableHead onClick={() => handleSort('name')}>
-                            Rider {sortConfig.key === 'name' && (
-                            <span>{sortConfig.direction === 'asc' ? '▲' : '▼'}</span>
-                        )}
-                        </TableHead>
-                        <TableHead onClick={() => handleSort('vehicleNumber')}>
-                            Vehicle Number {sortConfig.key === 'vehicleNumber' && (
-                            <span>{sortConfig.direction === 'asc' ? '▲' : '▼'}</span>
-                        )}
-                        </TableHead>
-                        <TableHead>Rating</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead onClick={() => handleSort('amountEarned')}>
-                            Amount Earned {sortConfig.key === 'amountEarned' && (
-                            <span>{sortConfig.direction === 'asc' ? '▲' : '▼'}</span>
-                        )}
-                        </TableHead>
+                        <TableHead onClick={() => handleSort('name')}>Name</TableHead>
+                        <TableHead>Gender</TableHead>
+                        <TableHead>Nationality</TableHead>
+                        <TableHead onClick={() => handleSort('vehicleNumber')}>Vehicle Number</TableHead>
+                        <TableHead>Vehicle Color</TableHead>
                         <TableHead>Actions</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    {paginatedData.map((rider) => (
-                        <TableRow key={rider.id}>
-                            <TableCell suppressHydrationWarning>
-                                <Image
-                                    src={rider.avatar}
-                                    alt={`${rider.name}'s avatar`}
-                                    width={40}
-                                    height={40}
-                                    className="rounded-full"
-                                />
-                            </TableCell>
-                            <TableCell>{rider.name}</TableCell>
-                            <TableCell>{rider.vehicleNumber}</TableCell>
-                            <TableCell>
-                                {Array.from({length: 5}, (_, i) => (
-                                    <Star
-                                        weight="fill"
-                                        key={i}
-                                        className={i < Math.floor(rider.rating) ?
-                                            'text-yellow-500 inline-block' :
-                                            'text-gray-300 inline-block'}
-                                        size={16}
-                                    />
-                                ))}
-                                <span className="ml-2">{rider.rating}</span>
-                            </TableCell>
-                            <TableCell>
-                                <Badge
-                                    variant={rider.status === 'online' ? "outline_success" : "outline_destructive"}
-                                >
-                                    {rider.status}
-                                </Badge>
-                            </TableCell>
-                            <TableCell>GH¢{rider.amountEarned}</TableCell>
-                            <TableCell>
-                                <div className="flex gap-2">
-                                    <TooltipProvider>
-                                        {/* View Rider Button */}
-                                        <Tooltip>
-                                            <TooltipTrigger>
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    className="rounded-full"
-                                                    onClick={() => redirect(`/riders/profile/${rider.id}`)}
-                                                >
-                                                    <Eye size={32} weight="duotone"/>
-                                                </Button>
-                                            </TooltipTrigger>
-                                            <TooltipContent>
-                                                View
-                                            </TooltipContent>
-                                        </Tooltip>
-                                    </TooltipProvider>
-
-                                    <TooltipProvider>
-                                        {/* Delete Rider Dialog Trigger */}
-                                        <Dialog>
-                                            <DialogTrigger>
-                                                {/* Delete Rider Button */}
-                                                <Tooltip>
-                                                    <TooltipTrigger>
-                                                        <Button variant="ghost" size="icon" className="rounded-full">
-                                                            <Trash size={32} className="" weight="duotone"/>
-                                                        </Button>
-                                                        <TooltipContent>
-                                                            Delete
-                                                        </TooltipContent>
-                                                    </TooltipTrigger>
-                                                </Tooltip>
-                                            </DialogTrigger>
-
-                                            <DialogContent>
-                                                <DialogHeader>
-                                                    <DialogTitle>Are you absolutely sure?</DialogTitle>
-                                                </DialogHeader>
-                                                <DialogBody>
-                                                    <DialogDescription>
-                                                        You&#39;re trying to delete a rider&#39;s account.
-                                                        <p>
-                                                            This will delete the
-                                                            rider and disable the rider&#39;s account.
-                                                        </p>
-                                                    </DialogDescription>
-                                                </DialogBody>
-                                                <DialogFooter>
-                                                    <div className="flex gap-2">
-                                                        <DialogClose>
-                                                            <Button variant="ghost">Close</Button>
-                                                        </DialogClose>
-                                                        <DialogClose>
-                                                            <Button
-                                                                variant="destructive"
-                                                                onClick={handleDelete}>
-                                                                Delete
-                                                            </Button>
-                                                        </DialogClose>
-                                                    </div>
-                                                </DialogFooter>
-                                            </DialogContent>
-                                        </Dialog>
-
-                                    </TooltipProvider>
-                                </div>
-                            </TableCell>
+                    {loading ? (
+                        <TableRow>
+                            <TableCell colSpan={6}>Loading...</TableCell>
                         </TableRow>
-                    ))}
+                    ) : paginatedData.length === 0 ? (
+                        <TableRow>
+                            <TableCell colSpan={6}>No riders found.</TableCell>
+                        </TableRow>
+                    ) : (
+                        paginatedData.map((rider) => (
+                            <TableRow key={rider.rider_id}>
+                                <TableCell>{`${rider.first_name || 'Not submitted'} ${rider.last_name || ''}`}</TableCell>
+                                <TableCell>{rider.gender || 'Not submitted'}</TableCell>
+                                <TableCell>{rider.nationality || 'Not submitted'}</TableCell>
+                                <TableCell>{rider.security?.vehicle_number || 'Not submitted'}</TableCell>
+                                <TableCell>{rider.security?.vehicle_color || 'Not submitted'}</TableCell>
+                                <TableCell>
+                                    <div className="flex gap-2">
+                                        <TooltipProvider>
+                                            {/* View Rider Button */}
+                                            <Tooltip>
+                                                <TooltipTrigger>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="rounded-full"
+                                                        onClick={() => redirect(`/riders/profile/${rider.rider_id}`)}
+                                                    >
+                                                        <Eye size={32} weight="duotone"/>
+                                                    </Button>
+                                                </TooltipTrigger>
+                                                <TooltipContent>View</TooltipContent>
+                                            </Tooltip>
+                                        </TooltipProvider>
+
+                                        <TooltipProvider>
+                                            {/* Delete Rider Dialog Trigger */}
+                                            <Dialog>
+                                                <DialogTrigger>
+                                                    {/* Delete Rider Button */}
+                                                    <Tooltip>
+                                                        <TooltipTrigger>
+                                                            <Button variant="ghost" size="icon" className="rounded-full">
+                                                                <Trash size={32} className="" weight="duotone"/>
+                                                            </Button>
+                                                            <TooltipContent>Delete</TooltipContent>
+                                                        </TooltipTrigger>
+                                                    </Tooltip>
+                                                </DialogTrigger>
+
+                                                <DialogContent>
+                                                    <DialogHeader>
+                                                        <DialogTitle>Are you absolutely sure?</DialogTitle>
+                                                    </DialogHeader>
+                                                    <DialogBody>
+                                                        <DialogDescription>
+                                                            You&#39;re trying to delete a rider&#39;s account.
+                                                            <p>
+                                                                This will delete the
+                                                                rider and disable the rider&#39;s account.
+                                                            </p>
+                                                        </DialogDescription>
+                                                    </DialogBody>
+                                                    <DialogFooter>
+                                                        <div className="flex gap-2">
+                                                            <DialogClose>
+                                                                <Button variant="ghost">Close</Button>
+                                                            </DialogClose>
+                                                            <DialogClose>
+                                                                <Button
+                                                                    variant="destructive"
+                                                                    onClick={handleDelete}>
+                                                                    Delete
+                                                                </Button>
+                                                            </DialogClose>
+                                                        </div>
+                                                    </DialogFooter>
+                                                </DialogContent>
+                                            </Dialog>
+
+                                        </TooltipProvider>
+                                    </div>
+                                </TableCell>
+                            </TableRow>
+                        ))
+                    )}
                 </TableBody>
             </Table>
 

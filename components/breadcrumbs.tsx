@@ -1,11 +1,12 @@
 import React, {Fragment} from 'react';
 import {ChevronLeft, ChevronRight, Home} from "lucide-react";
-import {Link} from 'next-view-transitions';
+import {Link, } from 'next-view-transitions';
 import {usePathname} from "next/navigation";
 import {ThemeToggle} from "@/components/theme-toggle";
 
 const Breadcrumbs = () => {
     const pathname = usePathname();
+    
 
     // Generate breadcrumb items
     const breadcrumbItems = pathname
@@ -16,15 +17,35 @@ const Breadcrumbs = () => {
             return {label: segment, href: path};
         });
 
+    // Improved back button handler with fallback
+    const handleBackClick = () => {
+        // Check if there's browser history
+        if (window.history.length > 1) {
+            window.history.back();
+        } else {
+            // Fallback: navigate to appropriate parent page based on current path
+            if (pathname.startsWith('/riders/profile/')) {
+                window.location.href = '/riders';
+            } else if (pathname.startsWith('/passengers/profile/')) {
+                window.location.href = '/passengers';
+            } else if (pathname.startsWith('/riders/enroll')) {
+                window.location.href = '/riders';
+            } else if (pathname !== '/dashboard') {
+                window.location.href = '/dashboard';
+            }
+        }
+    };
+
     return (
         <div className="flex text-gray-500 mb-4 justify-between">
             <div className="flex gap-1 items-center">
                 {
                     pathname !== "/dashboard" && <div
-                        onClick={() => window.history.back()}
+                        onClick={handleBackClick}
                         className="motion-preset-slide-right border p-2 cursor-pointer
                     hover:bg-gray-200 transition-all duration-300
                     rounded-full border-gray-500 mr-2"
+                        title="Go back"
                     >
                         <ChevronLeft size={16} className="motion-preset-slide-right"/>
                     </div>
