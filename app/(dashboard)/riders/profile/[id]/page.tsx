@@ -1,23 +1,32 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import Image from "next/image";
 import {Button} from "@/components/ui/button";
-import {CalendarCheck, Dot, Phone, Star, User} from "@phosphor-icons/react/dist/ssr";
+import {CalendarCheck, Dot, PencilSimpleLine, Phone, Star, User, Check, X} from "@phosphor-icons/react/dist/ssr";
 import {Tabs, TabsContent, TabsList, TabsTrigger} from "@/components/ui/tabs";
 import ViewRiderPersonalInformationForm from "@/components/forms/riders/view/view-rider-personal-information-form";
 import ViewRiderSecurityInformationForm from '@/components/forms/riders/view/view-rider-security-information-form';
 import ViewRiderFinanceInformationForm from "@/components/forms/riders/view/view-rider-finance-information-form";
 import ViewRiderDocumentsForm from "@/components/forms/riders/view/view-rider-documents-form";
+import AddRiderPersonalInformationForm from "@/components/forms/riders/add/add-rider-personal-information-form";
+import UpdateRiderSecurityInformationForm from "@/components/forms/riders/add/add-rider-security-information-form";
+import UpdateRiderFinanceInformationForm from "@/components/forms/riders/add/add-rider-finance-information-form";
 import {useParams} from "next/navigation";
 import {Params} from "next/dist/server/request/params";
 import { getRiderById } from "@/app/(server-actions)/(riders-actions)/get-rider-by-id.action";
+import { toast } from "sonner";
 
 export default function RiderProfile() {
     const {id}: Params = useParams();
     const [rider, setRider] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [isEditing, setIsEditing] = useState(false);
+    const [activeTab, setActiveTab] = useState("personal_information");
+    const formRef = useRef<{ submit: () => void } | null>(null);
+    const securityFormRef = useRef<{ submit: () => void } | null>(null);
+    const [securityPending, setSecurityPending] = useState(false);
 
     useEffect(() => {
         async function fetchRider() {
@@ -43,10 +52,30 @@ export default function RiderProfile() {
         }
     }, [id]);
 
+    const handleSaveSuccess = () => {
+        setIsEditing(false);
+        // Optionally refresh the rider data
+        if (id) {
+            getRiderById(id as string).then(data => {
+                if (data) {
+                    setRider(data);
+                }
+            });
+        }
+    };
+
+    const handleCancelEdit = () => {
+        setIsEditing(false);
+        setActiveTab("personal_information");
+    };
+
     if (loading) {
         return (
             <div className="flex justify-center items-center h-64">
-                <div className="text-lg">Loading rider information...</div>
+                <div className="flex items-center">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-yellow-500"></div>
+                    <span className="ml-3 text-gray-600 dark:text-gray-400"></span>
+                </div>
             </div>
         );
     }
@@ -126,6 +155,53 @@ export default function RiderProfile() {
                         </div>
                     </div>
                 </div>
+
+                {/* Edit/Cancel/Save Buttons */}
+                <div className="flex gap-2">
+                    {!isEditing ? (
+                        <Button
+                            className="motion-preset-blur-left text-white"
+                            onClick={() => setIsEditing(true)}
+                        >
+                            <PencilSimpleLine size={32} weight="duotone" />
+                            Edit
+                        </Button>
+                    ) : (
+                        <>
+                            <Button
+                                variant="outline"
+                                onClick={handleCancelEdit}
+                                disabled={securityPending}
+                            >
+                                <X size={20} weight="duotone" />
+                                Cancel
+                            </Button>
+                            <Button
+                                className="text-white"
+                                onClick={() => {
+                                    if (activeTab === "personal_information" && formRef.current) {
+                                        formRef.current.submit();
+                                    } else if (activeTab === "security_information" && securityFormRef.current) {
+                                        securityFormRef.current.submit();
+                                    }
+                                }}
+                                disabled={securityPending}
+                            >
+                                {securityPending && activeTab === "security_information" ? (
+                                    <>
+                                        <span className="animate-spin mr-2 h-4 w-4 border-b-2 border-white inline-block rounded-full"></span>
+                                        Updating...
+                                    </>
+                                ) : (
+                                    <>
+                                        <Check size={20} weight="duotone" />
+                                        Save
+                                    </>
+                                )}
+                            </Button>
+                        </>
+                    )}
+                </div>
             </div>
             <hr/>
             <Tabs defaultValue="profile">
@@ -140,7 +216,7 @@ export default function RiderProfile() {
                 </TabsList>
                 <TabsContent value="profile">
                     {/* Inner tabs for profile */}
-                    <Tabs defaultValue="personal_information">
+                    <Tabs defaultValue="personal_information" value={activeTab} onValueChange={setActiveTab}>
                         <TabsList className="bg-transparent flex gap-2">
                             <TabsTrigger
                                 value="personal_information"
@@ -176,20 +252,45 @@ export default function RiderProfile() {
                             </TabsTrigger>
                         </TabsList>
 
-                        <TabsContent value="personal_information">
-                            <ViewRiderPersonalInformationForm rider={rider} />
+                        <TabsContent value="personal_information" data-tab="personal_information">
+                            {isEditing ? (
+                                <AddRiderPersonalInformationForm 
+                                    ref={formRef}
+                                    rider={rider} 
+                                    isEditMode={true} 
+                                    onSaveSuccess={handleSaveSuccess}
+                                />
+                            ) : (
+                                <ViewRiderPersonalInformationForm rider={rider} />
+                            )}
                         </TabsContent>
 
-                        <TabsContent value="security_information">
-                            <ViewRiderSecurityInformationForm rider={rider} />
+                        <TabsContent value="security_information" data-tab="security_information">
+                            {isEditing ? (
+                                <UpdateRiderSecurityInformationForm 
+                                    ref={securityFormRef}
+                                    rider={rider} 
+                                    onSaveSuccess={handleSaveSuccess}
+                                    setIsPending={setSecurityPending}
+                                />
+                            ) : (
+                                <ViewRiderSecurityInformationForm rider={rider} />
+                            )}
                         </TabsContent>
 
-                        <TabsContent value="document">
+                        <TabsContent value="document" data-tab="document">
                             <ViewRiderDocumentsForm rider={rider} />
                         </TabsContent>
 
-                        <TabsContent value="finance">
-                            <ViewRiderFinanceInformationForm rider={rider} />
+                        <TabsContent value="finance" data-tab="finance">
+                            {isEditing ? (
+                                <UpdateRiderFinanceInformationForm 
+                                    rider={rider} 
+                                    onSaveSuccess={handleSaveSuccess}
+                                />
+                            ) : (
+                                <ViewRiderFinanceInformationForm rider={rider} />
+                            )}
                         </TabsContent>
                     </Tabs>
                 </TabsContent>

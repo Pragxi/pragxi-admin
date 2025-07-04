@@ -1,12 +1,13 @@
 "use client";
 
-import React, {useState} from 'react';
+import React, {useState, useCallback} from 'react';
 import {Tabs, TabsContent, TabsList, TabsTrigger} from "@/components/ui/tabs";
 // import AddRiderPersonalInformationForm from "@/components/forms/riders/add/add-rider-personal-information-form";
 // import AddRiderSecurityInformationForm from '@/components/forms/riders/add/add-rider-security-information-form';
 // import AddRiderFinanceInformationForm from "@/components/forms/riders/add/add-rider-finance-information-form";
 // import AddRiderDocumentsForm from "@/components/forms/riders/add/add-rider-documents-form";
 import dynamic from "next/dynamic";
+import { getRiderById } from "@/app/(server-actions)/(riders-actions)/get-rider-by-id.action";
 
 const AddRiderPersonalInformationForm = dynamic(
     () => import('@/components/forms/riders/add/add-rider-personal-information-form'),
@@ -30,6 +31,25 @@ const AddRiderDocumentsForm = dynamic(
 
 const EnrollRider = () => {
     const [activeTab, setActiveTab] = useState("personal_information");
+    const [rider, setRider] = useState<any>(null);
+    const [isFetchingRider, setIsFetchingRider] = useState(false);
+
+    // Called after personal info is saved
+    const handlePersonalInfoSaved = useCallback(async () => {
+        const riderId = localStorage.getItem("added-rider-id");
+        if (riderId) {
+            setIsFetchingRider(true);
+            try {
+                const fetchedRider = await getRiderById(riderId);
+                setRider(fetchedRider);
+            } catch (err) {
+                // Optionally handle error
+                setRider(null);
+            } finally {
+                setIsFetchingRider(false);
+            }
+        }
+    }, []);
 
     return (
         <div className="flex flex-col w-full space-y-6">
@@ -65,7 +85,9 @@ const EnrollRider = () => {
                         className="px-2 data-[state=active]:text-primary
                                 data-[state=active]:shadow-none data-[state=active]:border-b-2
                                 data-[state=active]:border-b-primary
-                                data-[state=inactive]:text-gray-500">
+                                data-[state=inactive]:text-gray-500"
+                        disabled={!rider}
+                    >
                         Security Information
                     </TabsTrigger>
                     <TabsTrigger
@@ -73,7 +95,9 @@ const EnrollRider = () => {
                         className="px-2 data-[state=active]:text-primary
                                 data-[state=active]:shadow-none data-[state=active]:border-b-2
                                 data-[state=active]:border-b-primary
-                                data-[state=inactive]:text-gray-500">
+                                data-[state=inactive]:text-gray-500"
+                        disabled={!rider}
+                    >
                         Document
                     </TabsTrigger>
                     <TabsTrigger
@@ -81,7 +105,9 @@ const EnrollRider = () => {
                         className="px-2 data-[state=active]:text-primary
                                 data-[state=active]:shadow-none data-[state=active]:border-b-2
                                 data-[state=active]:border-b-primary
-                                data-[state=inactive]:text-gray-500">
+                                data-[state=inactive]:text-gray-500"
+                        disabled={!rider}
+                    >
                         Finance
                     </TabsTrigger>
                 </TabsList>
@@ -91,7 +117,7 @@ const EnrollRider = () => {
                     forceMount
                     hidden={activeTab !== "personal_information"}
                 >
-                    <AddRiderPersonalInformationForm/>
+                    <AddRiderPersonalInformationForm onSaveSuccess={handlePersonalInfoSaved} />
                 </TabsContent>
 
                 <TabsContent
@@ -99,7 +125,7 @@ const EnrollRider = () => {
                     forceMount
                     hidden={activeTab !== "security_information"}
                 >
-                    <AddRiderSecurityInformationForm/>
+                    <AddRiderSecurityInformationForm rider={rider} />
                 </TabsContent>
 
                 <TabsContent
@@ -107,7 +133,7 @@ const EnrollRider = () => {
                     forceMount
                     hidden={activeTab !== "document"}
                 >
-                    <AddRiderDocumentsForm/>
+                    <AddRiderDocumentsForm />
                 </TabsContent>
 
                 <TabsContent
@@ -115,7 +141,7 @@ const EnrollRider = () => {
                     forceMount
                     hidden={activeTab !== "finance"}
                 >
-                    <AddRiderFinanceInformationForm/>
+                    <AddRiderFinanceInformationForm rider={rider} />
                 </TabsContent>
             </Tabs>
         </div>

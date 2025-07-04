@@ -12,11 +12,12 @@ import {Popover, PopoverContent, PopoverTrigger} from "@/components/ui/popover";
 import {Calendar} from "@/components/ui/calendar";
 import {Calendar as CalendarIcon, Check, ChevronsUpDown, Loader2} from "lucide-react";
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue,} from "@/components/ui/select";
-import {Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList,} from "@/components/ui/command";
+import {Command, CommandEmpty, CommandGroup, CommandInput, CommandItem} from "@/components/ui/command";
 import {addRiderPersonalAction} from "@/app/(server-actions)/(riders-actions)/add-rider-personal.action";
+import {updateRiderPersonalAction} from "@/app/(server-actions)/(riders-actions)/update-rider-personal.action";
 import {RiderInfoSchema} from "@/types/rider";
 import {useMutation} from "@tanstack/react-query";
-import {useState} from "react";
+import {useState, useEffect, forwardRef, useImperativeHandle} from "react";
 
 const countries = [
     {label: "Ghana", value: "ghana"},
@@ -26,7 +27,17 @@ const countries = [
     // Add more countries as needed
 ];
 
-const AddRiderPersonalInformationForm = () => {
+interface AddRiderPersonalInformationFormProps {
+    rider?: any;
+    isEditMode?: boolean;
+    onSaveSuccess?: () => void;
+}
+
+const AddRiderPersonalInformationForm = forwardRef<{ submit: () => void }, AddRiderPersonalInformationFormProps>(({ 
+    rider, 
+    isEditMode = false, 
+    onSaveSuccess 
+}, ref) => {
     const [hideSubmitButton, setHideSubmitButton] = useState(false);
 
     const form = useForm<z.infer<typeof RiderInfoSchema>>({
@@ -42,9 +53,27 @@ const AddRiderPersonalInformationForm = () => {
             city: "",
             gps_address: "",
         },
-    })
+    });
 
-    const {mutate, isPending} = useMutation({
+    // Set form values when rider data is available (for edit mode)
+    useEffect(() => {
+        if (rider?.personal && isEditMode) {
+            form.reset({
+                first_name: rider.personal.first_name || "",
+                last_name: rider.personal.last_name || "",
+                phone_number: rider.personal.phone_number || "",
+                email: rider.personal.email || "",
+                marital_status: rider.personal.marital_status || "",
+                gender: rider.personal.gender || "",
+                nationality: rider.personal.nationality || "ghana",
+                city: rider.personal.city || "",
+                gps_address: rider.personal.gps_address || "",
+                dob: rider.personal.dob ? new Date(rider.personal.dob) : undefined,
+            });
+        }
+    }, [rider, isEditMode, form]);
+
+    const createMutation = useMutation({
         mutationFn: addRiderPersonalAction,
         onSuccess: (data) => {
             if (data.error || !data.success) {
@@ -53,9 +82,7 @@ const AddRiderPersonalInformationForm = () => {
                 });
             } else {
                 setHideSubmitButton(true);
-                // Store the user_id in localStorage so that the other tabs can use it to insert the rest of the user data
                 localStorage.setItem("added-rider-id", data?.data?.user_id!);
-
                 toast.success("Rider created successfully", {
                     closeButton: true
                 });
@@ -68,17 +95,50 @@ const AddRiderPersonalInformationForm = () => {
         },
     });
 
+    const updateMutation = useMutation({
+        mutationFn: (values: z.infer<typeof RiderInfoSchema>) => 
+            updateRiderPersonalAction(rider.rider_id, values),
+        onSuccess: (data) => {
+            if (data.error || !data.success) {
+                toast.error(data.error, {
+                    closeButton: true
+                });
+            } else {
+                toast.success("Rider updated successfully", {
+                    closeButton: true
+                });
+                onSaveSuccess?.();
+            }
+        },
+        onError: () => {
+            toast.error("Failed to update rider", {
+                closeButton: true
+            });
+        },
+    });
+
+    const isPending = createMutation.isPending || updateMutation.isPending;
+
     const onSubmit = async (values: z.infer<typeof RiderInfoSchema>) => {
-        localStorage.setItem("added-rider-id", "");
-        mutate(values);
+        if (isEditMode) {
+            updateMutation.mutate(values);
+        } else {
+            localStorage.setItem("added-rider-id", "");
+            createMutation.mutate(values);
+        }
     };
 
+    useImperativeHandle(ref, () => ({
+        submit: () => {
+            form.handleSubmit(onSubmit)();
+        }
+    }));
 
     return (
         <Form {...form}>
             <form
                 onSubmit={(e) => {
-                    e.preventDefault(); // extra safety
+                    e.preventDefault();
                     form.handleSubmit(onSubmit)(e);
                 }}
                 className="space-y-4 my-3 motion-preset-blur-right delay-100"
@@ -225,8 +285,7 @@ const AddRiderPersonalInformationForm = () => {
                             render={({field}) => (
                                 <FormItem>
                                     <FormLabel>Marital Status</FormLabel>
-                                    <Select onValueChange={field.onChange} defaultValue={field.value}
-                                            disabled={isPending || hideSubmitButton}>
+                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
                                         <FormControl>
                                             <SelectTrigger className="w-full">
                                                 <SelectValue placeholder="Select Marital Status"/>
@@ -255,8 +314,7 @@ const AddRiderPersonalInformationForm = () => {
                             render={({field}) => (
                                 <FormItem>
                                     <FormLabel>Gender</FormLabel>
-                                    <Select onValueChange={field.onChange} defaultValue={field.value}
-                                            disabled={isPending || hideSubmitButton}>
+                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
                                         <FormControl>
                                             <SelectTrigger className="w-full">
                                                 <SelectValue placeholder="Select Gender"/>
@@ -292,9 +350,7 @@ const AddRiderPersonalInformationForm = () => {
                                                     )}
                                                 >
                                                     {field.value
-                                                        ? countries.find(
-                                                            (country) => country.value === field.value
-                                                        )?.label
+                                                        ? countries.find((country) => country.value === field.value)?.label
                                                         : "Select country"}
                                                     <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50"/>
                                                 </Button>
@@ -303,30 +359,28 @@ const AddRiderPersonalInformationForm = () => {
                                         <PopoverContent className="w-full p-0">
                                             <Command>
                                                 <CommandInput placeholder="Search country..."/>
-                                                <CommandList>
-                                                    <CommandEmpty>No country found.</CommandEmpty>
-                                                    <CommandGroup>
-                                                        {countries.map((country) => (
-                                                            <CommandItem
-                                                                key={country.value}
-                                                                value={country.label}
-                                                                onSelect={() => {
-                                                                    form.setValue("nationality", country.value);
-                                                                }}
-                                                            >
-                                                                <Check
-                                                                    className={cn(
-                                                                        "mr-2 h-4 w-4",
-                                                                        country.value === field.value
-                                                                            ? "opacity-100"
-                                                                            : "opacity-0"
-                                                                    )}
-                                                                />
-                                                                {country.label}
-                                                            </CommandItem>
-                                                        ))}
-                                                    </CommandGroup>
-                                                </CommandList>
+                                                <CommandEmpty>No country found.</CommandEmpty>
+                                                <CommandGroup>
+                                                    {countries.map((country) => (
+                                                        <CommandItem
+                                                            value={country.label}
+                                                            key={country.value}
+                                                            onSelect={() => {
+                                                                form.setValue("nationality", country.value)
+                                                            }}
+                                                        >
+                                                            <Check
+                                                                className={cn(
+                                                                    "mr-2 h-4 w-4",
+                                                                    country.value === field.value
+                                                                        ? "opacity-100"
+                                                                        : "opacity-0"
+                                                                )}
+                                                            />
+                                                            {country.label}
+                                                        </CommandItem>
+                                                    ))}
+                                                </CommandGroup>
                                             </Command>
                                         </PopoverContent>
                                     </Popover>
@@ -337,7 +391,7 @@ const AddRiderPersonalInformationForm = () => {
                     </div>
                 </div>
 
-                {/* City/Town & GPS Address */}
+                {/* City & GPS Address */}
                 <div className="grid grid-cols-2 gap-4">
                     <div>
                         <FormField
@@ -345,11 +399,11 @@ const AddRiderPersonalInformationForm = () => {
                             name="city"
                             render={({field}) => (
                                 <FormItem>
-                                    <FormLabel>City/Town</FormLabel>
+                                    <FormLabel>City</FormLabel>
                                     <FormControl>
                                         <Input
                                             disabled={isPending || hideSubmitButton}
-                                            placeholder="eg. Mpraeso"
+                                            placeholder="eg. Accra"
                                             type="text"
                                             className="w-full"
                                             {...field}
@@ -370,7 +424,7 @@ const AddRiderPersonalInformationForm = () => {
                                     <FormControl>
                                         <Input
                                             disabled={isPending || hideSubmitButton}
-                                            placeholder="GW-178-937"
+                                            placeholder="eg. GA-123-456"
                                             type="text"
                                             className="w-full"
                                             {...field}
@@ -382,21 +436,25 @@ const AddRiderPersonalInformationForm = () => {
                         />
                     </div>
                 </div>
-                {
-                    !hideSubmitButton && <Button type="submit" disabled={isPending || hideSubmitButton}>{
-                        isPending ?
+
+                {!hideSubmitButton && (
+                    <Button type="submit" disabled={isPending} className="w-full">
+                        {isPending ? (
                             <>
                                 <Loader2 className="mr-2 h-4 w-4 animate-spin"/>
-                                <span>Submitting</span>
+                                {isEditMode ? "Updating..." : "Creating..."}
                             </>
-                            : "Submit"
-                    }
+                        ) : (
+                            isEditMode ? "Update Rider" : "Create Rider"
+                        )}
                     </Button>
-                }
+                )}
             </form>
         </Form>
     );
-};
+});
+
+AddRiderPersonalInformationForm.displayName = 'AddRiderPersonalInformationForm';
 
 export default AddRiderPersonalInformationForm;
 

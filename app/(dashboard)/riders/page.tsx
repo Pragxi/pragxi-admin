@@ -203,7 +203,12 @@ const Riders = () => {
                 <TableBody>
                     {loading ? (
                         <TableRow>
-                            <TableCell colSpan={6}>Loading...</TableCell>
+                            <TableCell colSpan={6} className="text-center py-8">
+                                <div className="flex justify-center items-center">
+                                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-yellow-500"></div>
+                                    <span className="ml-3 text-gray-600 dark:text-gray-400"></span>
+                                </div>
+                            </TableCell>
                         </TableRow>
                     ) : paginatedData.length === 0 ? (
                         <TableRow>
