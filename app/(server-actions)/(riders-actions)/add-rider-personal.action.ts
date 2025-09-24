@@ -83,7 +83,7 @@ export const addRiderPersonalAction = async (formData: z.infer<typeof RiderInfoS
                 data: {
                     first_name: parsedData.data.first_name,
                     last_name: parsedData.data.last_name,
-                    user_role: 'rider',
+                    user_type: 'rider',
                     phone_number: parsedData.data.phone_number,
                 }
             }
