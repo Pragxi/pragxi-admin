@@ -1,10 +1,9 @@
 "use client";
 
-import React from 'react';
+import React, {useEffect, useMemo, useState} from 'react';
 import Image from "next/image";
 import {Button} from "@/components/ui/button";
 import {CalendarCheck, Dot, PencilSimpleLine, Phone, Star, User} from "@phosphor-icons/react/dist/ssr";
-import {generateRiders} from "@/dummy/riders";
 import {Tabs, TabsContent, TabsList, TabsTrigger} from "@/components/ui/tabs";
 import ViewRiderPersonalInformationForm from "@/components/forms/riders/view/view-rider-personal-information-form";
 import ViewRiderSecurityInformationForm from '@/components/forms/riders/view/view-rider-security-information-form';
@@ -12,13 +11,100 @@ import ViewRiderFinanceInformationForm from "@/components/forms/riders/view/view
 import ViewRiderDocumentsForm from "@/components/forms/riders/view/view-rider-documents-form";
 import {useParams} from "next/navigation";
 import {Params} from "next/dist/server/request/params";
+import {createClient} from "@/utils/supabase/client";
 
-const riders = generateRiders(200);
+type Personal = {
+    rider_id: string;
+    first_name: string | null;
+    last_name: string | null;
+    phone_number: string | null;
+    email: string | null;
+    dob: string | null;
+    marital_status: string | null;
+    gender: string | null;
+    nationality: string | null;
+    city: string | null;
+    gps_address: string | null;
+};
+
+type Security = {
+    rider_id: string;
+    vehicle: string | null;
+    vehicle_number: string | null;
+    vehicle_color: string | null;
+    id_number: string | null;
+    drivers_license_number: string | null;
+    insurance_type: string | null;
+    insurance_number: string | null;
+    insurance_expiration_date: string | null; // YYYY-MM-DD
+    witness_name: string | null;
+    witness_relationship: string | null;
+    witness_phone_number: string | null;
+};
+
+type Finance = {
+    rider_id: string;
+    service_provider: string | null;
+    mobile_money_number: string | null;
+};
+
 const RiderProfile = () => {
 
     const {id}: Params = useParams();
 
-    const rider = riders[Number(id) - 1]
+    const [personal, setPersonal] = useState<Personal | null>(null);
+    const [security, setSecurity] = useState<Security | null>(null);
+    const [finance, setFinance] = useState<Finance | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const [isEditing, setIsEditing] = useState(false);
+
+    useEffect(() => {
+        const supabase = createClient();
+        const fetchData = async () => {
+            try {
+                setLoading(true);
+                setError(null);
+
+                const riderId = String(id);
+                const { data: p, error: perr } = await supabase
+                    .from('riders_personal_information')
+                    .select('*')
+                    .eq('rider_id', riderId)
+                    .maybeSingle();
+                if (perr) throw new Error(perr.message);
+
+                const { data: s, error: serr } = await supabase
+                    .from('riders_security_information')
+                    .select('*')
+                    .eq('rider_id', riderId)
+                    .maybeSingle();
+                if (serr && serr.code !== 'PGRST116') throw new Error(serr.message);
+
+                const { data: f, error: ferr } = await supabase
+                    .from('riders_financial_information')
+                    .select('*')
+                    .eq('rider_id', riderId)
+                    .maybeSingle();
+                if (ferr && ferr.code !== 'PGRST116') throw new Error(ferr.message);
+
+                setPersonal(p as any);
+                setSecurity(s as any);
+                setFinance(f as any);
+            } catch (e: any) {
+                setError(e?.message || 'Failed to load rider');
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchData();
+    }, [id]);
+
+    const displayName = useMemo(() => {
+        const name = `${personal?.first_name ?? ''} ${personal?.last_name ?? ''}`.trim();
+        return name || 'Rider';
+    }, [personal]);
+
 
     return (
         <div className="flex flex-col w-full space-y-6">
@@ -27,7 +113,7 @@ const RiderProfile = () => {
                 <div className="flex gap-4">
                     {/* Image */}
                     <Image
-                        src={rider.avatar}
+                        src={`${location.origin}/api/avatar/${id}`}
                         alt="Rider"
                         height={100}
                         width={100}
@@ -35,7 +121,7 @@ const RiderProfile = () => {
                     />
                     <div className="flex flex-col gap-4">
                         <div className="flex gap-1 items-center">
-                            <div className="text-xl font-bold">{rider.name}</div>
+                            <div className="text-xl font-bold">{displayName}</div>
                             <Dot size={32} weight="duotone" className="text-green-500"/>
                             <Button size="icon" className="rounded-full">
                                 <Phone size={32} weight="duotone" className="text-white"/>
@@ -48,14 +134,14 @@ const RiderProfile = () => {
                                         <Star
                                             weight="fill"
                                             key={i}
-                                            className={i < Math.floor(rider.rating) ?
+                                            className={i < Math.floor(0) ?
                                                 'text-primary' :
                                                 'text-gray-300'}
                                             size={16}
                                         />
                                     ))}
                                 </div>
-                                <div className="text-gray-500">{rider.rating} Stars</div>
+                                <div className="text-gray-500">- Stars</div>
                             </div>
                             <div className="flex gap-2 text-sm text-gray-500 items-center">
                                 <Image
@@ -65,17 +151,17 @@ const RiderProfile = () => {
                                     width={100}
                                     className="w-6 h-6"
                                 />
-                                201 Completed Trips
+                                Completed Trips: -
                             </div>
                         </div>
                     </div>
                 </div>
-                <Button className="motion-preset-blur-left text-white">
+                <Button className="motion-preset-blur-left text-white" onClick={() => setIsEditing((v) => !v)}>
                     <PencilSimpleLine
                         size={32}
                         weight="duotone"
                     />
-                    Edit
+                    {isEditing ? 'Done' : 'Edit'}
                 </Button>
             </div>
             <hr/>
@@ -128,19 +214,49 @@ const RiderProfile = () => {
                         </TabsList>
 
                         <TabsContent value="personal_information">
-                            <ViewRiderPersonalInformationForm/>
+                            {loading ? (
+                                <div className="p-4">Loading...</div>
+                            ) : error ? (
+                                <div className="p-4 text-red-500">{error}</div>
+                            ) : (
+                                <ViewRiderPersonalInformationForm data={personal ?? undefined} editable={isEditing}/>
+                            )}
                         </TabsContent>
 
                         <TabsContent value="security_information">
-                            <ViewRiderSecurityInformationForm/>
+                            {loading ? (
+                                <div className="p-4">Loading...</div>
+                            ) : error ? (
+                                <div className="p-4 text-red-500">{error}</div>
+                            ) : (
+                                <ViewRiderSecurityInformationForm editable={isEditing} data={security ? {
+                                    vehicle: security.vehicle,
+                                    vehicle_number: security.vehicle_number,
+                                    vehicle_color: security.vehicle_color,
+                                    id_number: security.id_number,
+                                    drivers_license_number: security.drivers_license_number,
+                                    insurance_type: security.insurance_type,
+                                    insurance_number: security.insurance_number,
+                                    insurance_expiration_date: security.insurance_expiration_date,
+                                    witness_name: security.witness_name,
+                                    relationship: security.witness_relationship,
+                                    witness_contact_number: security.witness_phone_number,
+                                } : undefined}/>
+                            )}
                         </TabsContent>
 
                         <TabsContent value="document">
-                            <ViewRiderDocumentsForm/>
+                            <ViewRiderDocumentsForm editable={isEditing}/>
                         </TabsContent>
 
                         <TabsContent value="finance">
-                            <ViewRiderFinanceInformationForm/>
+                            {loading ? (
+                                <div className="p-4">Loading...</div>
+                            ) : error ? (
+                                <div className="p-4 text-red-500">{error}</div>
+                            ) : (
+                                <ViewRiderFinanceInformationForm data={finance ?? undefined} editable={isEditing}/>
+                            )}
                         </TabsContent>
 
                     </Tabs>
@@ -150,7 +266,6 @@ const RiderProfile = () => {
                     Rider History Will be here
                 </TabsContent>
             </Tabs>
-
         </div>
     );
 };

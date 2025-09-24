@@ -1,5 +1,6 @@
 "use client";
 import {toast} from "sonner";
+import {useEffect} from "react";
 import {useForm} from "react-hook-form";
 import {zodResolver} from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -55,7 +56,25 @@ const countries = [
     // Add more countries as needed
 ];
 
-const ViewRiderPersonalInformationForm = () => {
+type PersonalData = {
+    first_name?: string | null;
+    last_name?: string | null;
+    phone_number?: string | null;
+    email?: string | null;
+    dob?: string | null; // ISO string from Supabase
+    marital_status?: string | null;
+    gender?: string | null;
+    nationality?: string | null;
+    city?: string | null;
+    gps_address?: string | null;
+};
+
+type Props = {
+    data?: PersonalData;
+    editable?: boolean;
+};
+
+const ViewRiderPersonalInformationForm = ({ data, editable = false }: Props) => {
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
         defaultValues: {
@@ -65,6 +84,22 @@ const ViewRiderPersonalInformationForm = () => {
             marital_status: "single",
         },
     });
+
+    useEffect(() => {
+        if (!data) return;
+        form.reset({
+            first_name: data.first_name ?? "",
+            last_name: data.last_name ?? "",
+            phone_number: data.phone_number ?? "",
+            email: data.email ?? "",
+            date_of_birth: data.dob ? new Date(data.dob) : new Date(),
+            marital_status: data.marital_status ?? "single",
+            gender: data.gender ?? "male",
+            nationality: (data.nationality?.toLowerCase() as any) ?? "ghana",
+            city: data.city ?? "",
+            gps_address: data.gps_address ?? "",
+        });
+    }, [data]);
 
     function onSubmit(values: z.infer<typeof formSchema>) {
         try {
@@ -101,6 +136,7 @@ const ViewRiderPersonalInformationForm = () => {
                                             type="text"
                                             className="w-full"
                                             {...field}
+                                            disabled={!editable}
                                         />
                                     </FormControl>
                                     <FormMessage/>
@@ -121,6 +157,7 @@ const ViewRiderPersonalInformationForm = () => {
                                             type="text"
                                             className="w-full"
                                             {...field}
+                                            disabled={!editable}
                                         />
                                     </FormControl>
                                     <FormMessage/>
@@ -145,6 +182,7 @@ const ViewRiderPersonalInformationForm = () => {
                                             type="text"
                                             className="w-full"
                                             {...field}
+                                            disabled={!editable}
                                         />
                                     </FormControl>
                                     <FormMessage/>
@@ -165,6 +203,7 @@ const ViewRiderPersonalInformationForm = () => {
                                             type="email"
                                             className="w-full"
                                             {...field}
+                                            disabled={!editable}
                                         />
                                     </FormControl>
                                     <FormMessage/>
@@ -192,6 +231,7 @@ const ViewRiderPersonalInformationForm = () => {
                                                         "w-full pl-3 text-left font-normal",
                                                         !field.value && "text-muted-foreground"
                                                     )}
+                                                    disabled={!editable}
                                                 >
                                                     {field.value ? (
                                                         format(field.value, "PPP")
@@ -225,7 +265,7 @@ const ViewRiderPersonalInformationForm = () => {
                                     <FormLabel>Marital Status</FormLabel>
                                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                                         <FormControl>
-                                            <SelectTrigger className="w-full">
+                                            <SelectTrigger className="w-full" disabled={!editable}>
                                                 <SelectValue placeholder="Select Marital Status"/>
                                             </SelectTrigger>
                                         </FormControl>
@@ -254,7 +294,7 @@ const ViewRiderPersonalInformationForm = () => {
                                     <FormLabel>Gender</FormLabel>
                                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                                         <FormControl>
-                                            <SelectTrigger className="w-full">
+                                            <SelectTrigger className="w-full" disabled={!editable}>
                                                 <SelectValue placeholder="Select Gender"/>
                                             </SelectTrigger>
                                         </FormControl>
@@ -285,6 +325,7 @@ const ViewRiderPersonalInformationForm = () => {
                                                         "w-full justify-between",
                                                         !field.value && "text-muted-foreground"
                                                     )}
+                                                    disabled={!editable}
                                                 >
                                                     {field.value
                                                         ? countries.find(
@@ -347,6 +388,7 @@ const ViewRiderPersonalInformationForm = () => {
                                             type="text"
                                             className="w-full"
                                             {...field}
+                                            disabled={!editable}
                                         />
                                     </FormControl>
                                     <FormMessage/>
@@ -367,6 +409,7 @@ const ViewRiderPersonalInformationForm = () => {
                                             type="text"
                                             className="w-full"
                                             {...field}
+                                            disabled={!editable}
                                         />
                                     </FormControl>
                                     <FormMessage/>
@@ -375,7 +418,7 @@ const ViewRiderPersonalInformationForm = () => {
                         />
                     </div>
                 </div>
-                <Button type="submit">Submit</Button>
+                <Button type="submit" disabled={!editable}>Submit</Button>
             </form>
         </Form>
     );

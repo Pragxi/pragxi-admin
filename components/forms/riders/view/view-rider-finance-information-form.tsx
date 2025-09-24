@@ -1,5 +1,6 @@
 "use client";
 import {toast} from "sonner";
+import {useEffect} from "react";
 import {useForm} from "react-hook-form";
 import {zodResolver} from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -19,13 +20,31 @@ const relationships = [
     {label: "AirtelTigo", value: "AirtelTigo"},
 ];
 
-const ViewRiderFinanceInformationForm = () => {
+type FinanceData = {
+    service_provider?: string | null;
+    mobile_money_number?: string | null;
+};
+
+type Props = {
+    data?: FinanceData;
+    editable?: boolean;
+};
+
+const ViewRiderFinanceInformationForm = ({ data, editable = false }: Props) => {
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
         defaultValues: {
             service_provider: "mtn",
         },
     });
+
+    useEffect(() => {
+        if (!data) return;
+        form.reset({
+            service_provider: (data.service_provider as any) ?? "mtn",
+            mobile_money_number: data.mobile_money_number ?? "",
+        });
+    }, [data]);
 
     function onSubmit(values: z.infer<typeof formSchema>) {
         try {
@@ -57,7 +76,7 @@ const ViewRiderFinanceInformationForm = () => {
                                 <FormLabel>Service Provider</FormLabel>
                                 <Select onValueChange={field.onChange} defaultValue={field.value}>
                                     <FormControl>
-                                        <SelectTrigger className="w-full">
+                                        <SelectTrigger className="w-full" disabled={!editable}>
                                             <SelectValue placeholder="Select relationship"/>
                                         </SelectTrigger>
                                     </FormControl>
@@ -80,7 +99,7 @@ const ViewRiderFinanceInformationForm = () => {
                             <FormItem>
                                 <FormLabel>Mobile Money Number</FormLabel>
                                 <FormControl>
-                                    <Input placeholder="e.g. 233248999999" {...field} />
+                                    <Input placeholder="e.g. 233248999999" {...field} disabled={!editable} />
                                 </FormControl>
                                 <FormMessage/>
                             </FormItem>
@@ -88,7 +107,7 @@ const ViewRiderFinanceInformationForm = () => {
                     />
                 </div>
 
-                <Button type="submit">Submit</Button>
+                <Button type="submit" disabled={!editable}>Submit</Button>
             </form>
         </Form>
     );

@@ -1,12 +1,11 @@
 "use client";
-import {useEffect, useMemo, useState} from 'react';
-import {Input} from '@/components/ui/input';
-import {Button} from '@/components/ui/button';
-import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow,} from '@/components/ui/table';
-import {Badge} from '@/components/ui/badge';
+import { useEffect, useMemo, useState } from 'react';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, } from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
 import Image from 'next/image';
-import {generateRiders} from "@/dummy/riders";
-import {Trash} from '@phosphor-icons/react/dist/ssr';
+import { Trash } from '@phosphor-icons/react/dist/ssr';
 import {
     Pagination,
     PaginationContent,
@@ -15,9 +14,9 @@ import {
     PaginationNext,
     PaginationPrevious
 } from '@/components/ui/pagination';
-import {Tooltip, TooltipContent, TooltipProvider, TooltipTrigger,} from "@/components/ui/tooltip"
-import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from '@/components/ui/select';
-import {Eye, Star} from "@phosphor-icons/react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger, } from "@/components/ui/tooltip"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Eye, Star } from "@phosphor-icons/react";
 import {
     Dialog,
     DialogClose,
@@ -28,43 +27,55 @@ import {
     DialogTitle,
     DialogTrigger,
 } from "@/components/ui/dialog"
-import {DialogBody} from "next/dist/client/components/react-dev-overlay/ui/components/dialog";
+import { DialogBody } from "next/dist/client/components/react-dev-overlay/ui/components/dialog";
 import toast from "react-hot-toast";
-import {redirect} from "next/navigation";
-import {Rider} from "@/types/rider";
-import {Link} from "next-view-transitions";
+import { redirect } from "next/navigation";
+import { Link } from "next-view-transitions";
+import { createClient } from "@/utils/supabase/client";
 
-// Dummy data
-const riders = generateRiders(27);
+type RiderRow = {
+    id: string;
+    name: string;
+    vehicleNumber?: string | null;
+    avatar?: string | null;
+    rating?: number | null;
+    status?: string | null;
+    amountEarned?: number | null;
+};
 
 const Riders = () => {
     const [searchTerm, setSearchTerm] = useState('');
-    const [sortConfig, setSortConfig] = useState({key: '', direction: ''});
+    const [debouncedSearch, setDebouncedSearch] = useState('');
+    const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' | '' }>({ key: '', direction: '' });
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(10);
+    const [rows, setRows] = useState<RiderRow[]>([]);
+    const [totalCount, setTotalCount] = useState(0);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
 
-    // Search filter
-    const filteredData = useMemo(() => {
-        return riders.filter(
-            (rider) =>
-                rider.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                rider.vehicleNumber.toLowerCase().includes(searchTerm.toLowerCase())
-        );
+    // Debounce search input
+    useEffect(() => {
+        const id = setTimeout(() => setDebouncedSearch(searchTerm), 400);
+        return () => clearTimeout(id);
     }, [searchTerm]);
 
-    // Sorting
+    // When search changes, jump back to page 1
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [debouncedSearch]);
+
+    // Client-side sorting (applies to current page data)
     const sortedData = useMemo(() => {
-        if (!sortConfig.key) return filteredData;
-        return [...filteredData].sort((a: Rider, b: Rider) => {
-            if (a[sortConfig.key] < b[sortConfig.key]) {
-                return sortConfig.direction === 'asc' ? -1 : 1;
-            }
-            if (a[sortConfig.key] > b[sortConfig.key]) {
-                return sortConfig.direction === 'asc' ? 1 : -1;
-            }
+        if (!sortConfig.key) return rows;
+        return [...rows].sort((a: any, b: any) => {
+            const av = a[sortConfig.key] ?? '';
+            const bv = b[sortConfig.key] ?? '';
+            if (av < bv) return sortConfig.direction === 'asc' ? -1 : 1;
+            if (av > bv) return sortConfig.direction === 'asc' ? 1 : -1;
             return 0;
         });
-    }, [filteredData, sortConfig]);
+    }, [rows, sortConfig]);
 
     useEffect(() => {
         const storedItemsPerPage = localStorage.getItem('riders-itemsPerPage');
@@ -73,15 +84,72 @@ const Riders = () => {
         }
     }, [])
 
-    // Pagination
-    const paginatedData = useMemo(() => {
-        const startIndex = (currentPage - 1) * itemsPerPage;
-        return sortedData.slice(startIndex, startIndex + itemsPerPage);
-    }, [currentPage, itemsPerPage, sortedData]);
+    // Fetch riders from Supabase with pagination and search
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                setLoading(true);
+                setError(null);
+                const supabase = createClient();
+                const offset = (currentPage - 1) * itemsPerPage;
+
+                let query = supabase
+                    .from('riders_personal_information')
+                    .select('rider_id, first_name, last_name', { count: 'exact' })
+                    .order('last_name', { ascending: true })
+                    .range(offset, offset + itemsPerPage - 1);
+
+                if (debouncedSearch.trim()) {
+                    const term = debouncedSearch.trim();
+                    query = query.or(`first_name.ilike.%${term}%,last_name.ilike.%${term}%`);
+                }
+
+                const { data: personal, error: personalError, count } = await query;
+                if (personalError) throw new Error(personalError.message);
+
+                const riderIds = (personal ?? []).map((p) => p.rider_id);
+                let securityMap: Record<string, { vehicle_number: string | null }> = {};
+                if (riderIds.length > 0) {
+                    const { data: security, error: secErr } = await supabase
+                        .from('riders_security_information')
+                        .select('rider_id, vehicle_number')
+                        .in('rider_id', riderIds);
+                    if (secErr) throw new Error(secErr.message);
+                    securityMap = (security ?? []).reduce((acc, cur) => {
+                        acc[cur.rider_id as string] = { vehicle_number: cur.vehicle_number ?? null };
+                        return acc;
+                    }, {} as Record<string, { vehicle_number: string | null }>);
+                }
+
+                const rowsMapped: RiderRow[] = (personal ?? []).map((p) => {
+                    const name = `${p.first_name ?? ''} ${p.last_name ?? ''}`.trim();
+                    const vehicleNumber = securityMap[p.rider_id]?.vehicle_number ?? null;
+                    const avatar = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(name || 'Rider')}`;
+                    return {
+                        id: p.rider_id,
+                        name,
+                        vehicleNumber,
+                        avatar,
+                        rating: null,
+                        status: null,
+                        amountEarned: null,
+                    };
+                });
+
+                setRows(rowsMapped);
+                setTotalCount(count ?? 0);
+            } catch (e: any) {
+                setError(e?.message || 'Failed to load riders');
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchData();
+    }, [currentPage, itemsPerPage, debouncedSearch]);
 
     const handleSort = (key: string) => {
         const direction = sortConfig.key === key && sortConfig.direction === 'asc' ? 'desc' : 'asc';
-        setSortConfig({key, direction});
+        setSortConfig({ key, direction });
     };
 
     const handleSetItemsPerPage = (value: number) => {
@@ -93,7 +161,7 @@ const Riders = () => {
     const deleteRider = () => {
         return new Promise((resolve, reject) => {
             setTimeout(() => {
-               
+
                 Math.random() > 0.5 ? reject("Deletion failed") : resolve("Rider deleted");
             }, 1000);
         });
@@ -146,7 +214,7 @@ const Riders = () => {
                     }}
                 >
                     <SelectTrigger className="w-[180px] motion-preset-blur-right delay-100">
-                        <SelectValue placeholder="Rows per page"/>
+                        <SelectValue placeholder="Rows per page" />
                     </SelectTrigger>
                     <SelectContent>
                         {[5, 10, 20, 50].map((pageSize) => (
@@ -165,30 +233,45 @@ const Riders = () => {
                         <TableHead>Avatar</TableHead>
                         <TableHead onClick={() => handleSort('name')}>
                             Rider {sortConfig.key === 'name' && (
-                            <span>{sortConfig.direction === 'asc' ? '▲' : '▼'}</span>
-                        )}
+                                <span>{sortConfig.direction === 'asc' ? '▲' : '▼'}</span>
+                            )}
                         </TableHead>
                         <TableHead onClick={() => handleSort('vehicleNumber')}>
                             Vehicle Number {sortConfig.key === 'vehicleNumber' && (
-                            <span>{sortConfig.direction === 'asc' ? '▲' : '▼'}</span>
-                        )}
+                                <span>{sortConfig.direction === 'asc' ? '▲' : '▼'}</span>
+                            )}
                         </TableHead>
                         <TableHead>Rating</TableHead>
                         <TableHead>Status</TableHead>
                         <TableHead onClick={() => handleSort('amountEarned')}>
                             Amount Earned {sortConfig.key === 'amountEarned' && (
-                            <span>{sortConfig.direction === 'asc' ? '▲' : '▼'}</span>
-                        )}
+                                <span>{sortConfig.direction === 'asc' ? '▲' : '▼'}</span>
+                            )}
                         </TableHead>
                         <TableHead>Actions</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    {paginatedData.map((rider) => (
+                    {loading && (
+                        <TableRow>
+                            <TableCell colSpan={7}>Loading...</TableCell>
+                        </TableRow>
+                    )}
+                    {!loading && error && (
+                        <TableRow>
+                            <TableCell colSpan={7} className="text-red-500">{error}</TableCell>
+                        </TableRow>
+                    )}
+                    {!loading && !error && sortedData.length === 0 && (
+                        <TableRow>
+                            <TableCell colSpan={7}>No riders found</TableCell>
+                        </TableRow>
+                    )}
+                    {!loading && !error && sortedData.map((rider) => (
                         <TableRow key={rider.id}>
                             <TableCell suppressHydrationWarning>
                                 <Image
-                                    src={rider.avatar}
+                                    src={`${location.origin}/api/avatar/${rider.id}`}
                                     alt={`${rider.name}'s avatar`}
                                     width={40}
                                     height={40}
@@ -196,28 +279,28 @@ const Riders = () => {
                                 />
                             </TableCell>
                             <TableCell>{rider.name}</TableCell>
-                            <TableCell>{rider.vehicleNumber}</TableCell>
+                            <TableCell>{rider.vehicleNumber || '-'}</TableCell>
                             <TableCell>
-                                {Array.from({length: 5}, (_, i) => (
+                                {Array.from({ length: 5 }, (_, i) => (
                                     <Star
                                         weight="fill"
                                         key={i}
-                                        className={i < Math.floor(rider.rating) ?
+                                        className={i < Math.floor(rider?.rating || 0) ?
                                             'text-yellow-500 inline-block' :
                                             'text-gray-300 inline-block'}
                                         size={16}
                                     />
                                 ))}
-                                <span className="ml-2">{rider.rating}</span>
+                                <span className="ml-2">{rider?.rating ?? '-'}</span>
                             </TableCell>
                             <TableCell>
                                 <Badge
-                                    variant={rider.status === 'online' ? "outline_success" : "outline_destructive"}
+                                    variant={rider?.status === 'online' ? "outline_success" : "outline_destructive"}
                                 >
-                                    {rider.status}
+                                    {rider?.status ?? 'offline'}
                                 </Badge>
                             </TableCell>
-                            <TableCell>GH¢{rider.amountEarned}</TableCell>
+                            <TableCell>GH¢{rider?.amountEarned ?? '-'}</TableCell>
                             <TableCell>
                                 <div className="flex gap-2">
                                     <TooltipProvider>
@@ -230,7 +313,7 @@ const Riders = () => {
                                                     className="rounded-full"
                                                     onClick={() => redirect(`/riders/profile/${rider.id}`)}
                                                 >
-                                                    <Eye size={32} weight="duotone"/>
+                                                    <Eye size={32} weight="duotone" />
                                                 </Button>
                                             </TooltipTrigger>
                                             <TooltipContent>
@@ -247,7 +330,7 @@ const Riders = () => {
                                                 <Tooltip>
                                                     <TooltipTrigger>
                                                         <Button variant="ghost" size="icon" className="rounded-full">
-                                                            <Trash size={32} className="" weight="duotone"/>
+                                                            <Trash size={32} className="" weight="duotone" />
                                                         </Button>
                                                         <TooltipContent>
                                                             Delete
@@ -316,36 +399,36 @@ const Riders = () => {
                     <PaginationItem className='cursor-pointer flex gap-1'>
                         {currentPage > 2 && (
                             <PaginationLink isActive className='border-0'
-                                            onClick={() => setCurrentPage(currentPage - 2)}>{currentPage - 2}</PaginationLink>
+                                onClick={() => setCurrentPage(currentPage - 2)}>{currentPage - 2}</PaginationLink>
                         )}
                         {currentPage > 1 && (
                             <PaginationLink isActive className='border-0'
-                                            onClick={() => setCurrentPage(currentPage - 1)}>{currentPage - 1}</PaginationLink>
+                                onClick={() => setCurrentPage(currentPage - 1)}>{currentPage - 1}</PaginationLink>
                         )}
                         <PaginationLink isActive className='border-0'>{currentPage}</PaginationLink>
-                        {currentPage < Math.ceil(sortedData.length / itemsPerPage) && (
+                        {currentPage < Math.ceil(totalCount / itemsPerPage) && (
                             <PaginationLink isActive className='border-0'
-                                            onClick={() => setCurrentPage(currentPage + 1)}>{currentPage + 1}</PaginationLink>
+                                onClick={() => setCurrentPage(currentPage + 1)}>{currentPage + 1}</PaginationLink>
                         )}
-                        {currentPage < Math.ceil(sortedData.length / itemsPerPage) - 1 && (
+                        {currentPage < Math.ceil(totalCount / itemsPerPage) - 1 && (
                             <PaginationLink isActive className='border-0'
-                                            onClick={() => setCurrentPage(currentPage + 2)}>{currentPage + 2}</PaginationLink>
+                                onClick={() => setCurrentPage(currentPage + 2)}>{currentPage + 2}</PaginationLink>
                         )}
                     </PaginationItem>
                     <PaginationItem className='cursor-pointer'>
                         <PaginationNext
                             onClick={() => setCurrentPage(prev =>
-                                Math.min(prev + 1, Math.ceil(sortedData.length / itemsPerPage))
+                                Math.min(prev + 1, Math.ceil(totalCount / itemsPerPage))
                             )}
-                            isActive={currentPage < Math.ceil(sortedData.length / itemsPerPage)}
+                            isActive={currentPage < Math.ceil(totalCount / itemsPerPage)}
                         />
                     </PaginationItem>
                     <PaginationItem className='cursor-pointer'>
                         <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => setCurrentPage(Math.ceil(sortedData.length / itemsPerPage))}
-                            disabled={currentPage === Math.ceil(sortedData.length / itemsPerPage)}
+                            onClick={() => setCurrentPage(Math.ceil(totalCount / itemsPerPage))}
+                            disabled={currentPage === Math.ceil(totalCount / itemsPerPage)}
                         >
                             Last
                         </Button>

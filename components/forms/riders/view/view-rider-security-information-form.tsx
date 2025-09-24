@@ -1,5 +1,6 @@
 "use client";
 import {toast} from "sonner";
+import {useEffect} from "react";
 import {useForm} from "react-hook-form";
 import {zodResolver} from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -34,13 +35,49 @@ const relationships = [
     {label: "Friend", value: "friend"},
 ];
 
-const ViewRiderSecurityInformationForm = () => {
+type SecurityData = {
+    vehicle?: string | null;
+    vehicle_number?: string | null;
+    vehicle_color?: string | null;
+    id_number?: string | null;
+    drivers_license_number?: string | null;
+    insurance_type?: string | null;
+    insurance_number?: string | null;
+    insurance_expiration_date?: string | null; // ISO date string (YYYY-MM-DD)
+    witness_name?: string | null;
+    relationship?: string | null; // witness_relationship
+    witness_contact_number?: string | null;
+};
+
+type Props = {
+    data?: SecurityData;
+    editable?: boolean;
+};
+
+const ViewRiderSecurityInformationForm = ({ data, editable = false }: Props) => {
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
         defaultValues: {
             insurance_expiration: new Date(),
         },
     });
+
+    useEffect(() => {
+        if (!data) return;
+        form.reset({
+            vehicle: data.vehicle ?? "",
+            vehicle_number: data.vehicle_number ?? "",
+            vehicle_color: data.vehicle_color ?? "",
+            id_number: data.id_number ?? "",
+            drivers_license_number: data.drivers_license_number ?? "",
+            insurance_type: data.insurance_type ?? "",
+            insurance_number: data.insurance_number ?? "",
+            insurance_expiration: data.insurance_expiration_date ? new Date(data.insurance_expiration_date) : new Date(),
+            witness_name: data.witness_name ?? "",
+            relationship: data.relationship ?? relationships[0].value,
+            witness_contact_number: data.witness_contact_number ?? "",
+        });
+    }, [data]);
 
     function onSubmit(values: z.infer<typeof formSchema>) {
         try {
@@ -71,7 +108,7 @@ const ViewRiderSecurityInformationForm = () => {
                             <FormItem>
                                 <FormLabel>Vehicle</FormLabel>
                                 <FormControl>
-                                    <Input placeholder="e.g. Sonia MG-2301" {...field} />
+                                    <Input placeholder="e.g. Sonia MG-2301" {...field} disabled={!editable} />
                                 </FormControl>
                                 <FormMessage/>
                             </FormItem>
@@ -84,7 +121,7 @@ const ViewRiderSecurityInformationForm = () => {
                             <FormItem>
                                 <FormLabel>Vehicle Number</FormLabel>
                                 <FormControl>
-                                    <Input placeholder="e.g. ABC-1234" {...field} />
+                                    <Input placeholder="e.g. ABC-1234" {...field} disabled={!editable} />
                                 </FormControl>
                                 <FormMessage/>
                             </FormItem>
@@ -101,7 +138,7 @@ const ViewRiderSecurityInformationForm = () => {
                             <FormItem>
                                 <FormLabel>Vehicle Color</FormLabel>
                                 <FormControl>
-                                    <Input placeholder="e.g. Red" {...field} />
+                                    <Input placeholder="e.g. Red" {...field} disabled={!editable} />
                                 </FormControl>
                                 <FormMessage/>
                             </FormItem>
@@ -114,7 +151,7 @@ const ViewRiderSecurityInformationForm = () => {
                             <FormItem>
                                 <FormLabel>ID Number</FormLabel>
                                 <FormControl>
-                                    <Input placeholder="e.g. GH123456789" {...field} />
+                                    <Input placeholder="e.g. GH123456789" {...field} disabled={!editable} />
                                 </FormControl>
                                 <FormMessage/>
                             </FormItem>
@@ -131,7 +168,7 @@ const ViewRiderSecurityInformationForm = () => {
                             <FormItem>
                                 <FormLabel>Driver&#39;s License Number</FormLabel>
                                 <FormControl>
-                                    <Input placeholder="e.g. DL123456789" {...field} />
+                                    <Input placeholder="e.g. DL123456789" {...field} disabled={!editable} />
                                 </FormControl>
                                 <FormMessage/>
                             </FormItem>
@@ -144,7 +181,7 @@ const ViewRiderSecurityInformationForm = () => {
                             <FormItem>
                                 <FormLabel>Insurance Type</FormLabel>
                                 <FormControl>
-                                    <Input placeholder="e.g. Comprehensive" {...field} />
+                                    <Input placeholder="e.g. Comprehensive" {...field} disabled={!editable} />
                                 </FormControl>
                                 <FormMessage/>
                             </FormItem>
@@ -161,7 +198,7 @@ const ViewRiderSecurityInformationForm = () => {
                             <FormItem>
                                 <FormLabel>Insurance Number</FormLabel>
                                 <FormControl>
-                                    <Input placeholder="e.g. INS123456789" {...field} />
+                                    <Input placeholder="e.g. INS123456789" {...field} disabled={!editable} />
                                 </FormControl>
                                 <FormMessage/>
                             </FormItem>
@@ -182,6 +219,7 @@ const ViewRiderSecurityInformationForm = () => {
                                                     "w-full pl-3 text-left font-normal",
                                                     !field.value && "text-muted-foreground"
                                                 )}
+                                            disabled={!editable}
                                             >
                                                 {field.value ? (
                                                     format(field.value, "PPP")
@@ -216,7 +254,7 @@ const ViewRiderSecurityInformationForm = () => {
                             <FormItem>
                                 <FormLabel>Witness Name</FormLabel>
                                 <FormControl>
-                                    <Input placeholder="e.g. John Doe" {...field} />
+                                    <Input placeholder="e.g. John Doe" {...field} disabled={!editable} />
                                 </FormControl>
                                 <FormMessage/>
                             </FormItem>
@@ -230,7 +268,7 @@ const ViewRiderSecurityInformationForm = () => {
                                 <FormLabel>Relationship</FormLabel>
                                 <Select onValueChange={field.onChange} defaultValue={field.value}>
                                     <FormControl>
-                                        <SelectTrigger className="w-full">
+                                        <SelectTrigger className="w-full" disabled={!editable}>
                                             <SelectValue placeholder="Select relationship"/>
                                         </SelectTrigger>
                                     </FormControl>
@@ -257,7 +295,7 @@ const ViewRiderSecurityInformationForm = () => {
                             <FormItem>
                                 <FormLabel>Witness Contact Number</FormLabel>
                                 <FormControl>
-                                    <Input placeholder="e.g. +233 24 123 4567" {...field} />
+                                    <Input placeholder="e.g. +233 24 123 4567" {...field} disabled={!editable} />
                                 </FormControl>
                                 <FormMessage/>
                             </FormItem>
@@ -265,7 +303,7 @@ const ViewRiderSecurityInformationForm = () => {
                     />
                 </div>
 
-                <Button type="submit">Submit</Button>
+                <Button type="submit" disabled={!editable}>Submit</Button>
             </form>
         </Form>
     );

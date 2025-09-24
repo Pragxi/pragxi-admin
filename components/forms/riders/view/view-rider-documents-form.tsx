@@ -29,7 +29,11 @@ const formSchema = z.object({
     insurance: z.array(z.instanceof(File)).nonempty("At least one insurance file is required"),
 });
 
-const ViewRiderDocumentsForm = () => {
+type Props = {
+    editable?: boolean;
+};
+
+const ViewRiderDocumentsForm = ({ editable = false }: Props) => {
     const [idCardFiles, setIdCardFiles] = useState<File[] | null>(null);
     const [driversLicenseFiles, setDriversLicenseFiles] = useState<File[] | null>(null);
     const [insuranceFiles, setInsuranceFiles] = useState<File[] | null>(null);
@@ -82,11 +86,12 @@ const ViewRiderDocumentsForm = () => {
                                 <FileUploader
                                     value={idCardFiles}
                                     onValueChange={(files) => {
+                                        if (!editable) return;
                                         setIdCardFiles(files);
                                         field.onChange(files); // Update react-hook-form state
                                     }}
                                     dropzoneOptions={dropZoneConfig}
-                                    className="relative bg-background rounded-lg p-2"
+                                    className={`relative bg-background rounded-lg p-2 ${!editable ? 'pointer-events-none opacity-60' : ''}`}
                                 >
                                     <FileInput
                                         id="fileInput"
@@ -134,11 +139,12 @@ const ViewRiderDocumentsForm = () => {
                                 <FileUploader
                                     value={driversLicenseFiles}
                                     onValueChange={(files) => {
+                                        if (!editable) return;
                                         setDriversLicenseFiles(files);
                                         field.onChange(files); // Update react-hook-form state
                                     }}
                                     dropzoneOptions={dropZoneConfig}
-                                    className="relative bg-background rounded-lg p-2"
+                                    className={`relative bg-background rounded-lg p-2 ${!editable ? 'pointer-events-none opacity-60' : ''}`}
                                 >
                                     <FileInput
                                         id="fileInput"
@@ -186,11 +192,12 @@ const ViewRiderDocumentsForm = () => {
                                 <FileUploader
                                     value={insuranceFiles}
                                     onValueChange={(files) => {
+                                        if (!editable) return;
                                         setInsuranceFiles(files);
                                         field.onChange(files); // Update react-hook-form state
                                     }}
                                     dropzoneOptions={dropZoneConfig}
-                                    className="relative bg-background rounded-lg p-2"
+                                    className={`relative bg-background rounded-lg p-2 ${!editable ? 'pointer-events-none opacity-60' : ''}`}
                                 >
                                     <FileInput
                                         id="fileInput"
@@ -227,7 +234,7 @@ const ViewRiderDocumentsForm = () => {
                     )}
                 />
 
-                <Button type="submit">Submit</Button>
+                <Button type="submit" disabled={!editable}>Submit</Button>
             </form>
         </Form>
     );
