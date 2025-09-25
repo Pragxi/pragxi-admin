@@ -15,7 +15,8 @@ import {Calendar as CalendarIcon, Loader2} from "lucide-react";
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue,} from "@/components/ui/select";
 import {createRiderSecurityInformation} from "@/app/(server-actions)/(riders-actions)/rider-security.actions";
 import {RiderSecuritySchema} from "@/types/rider";
-import {useState} from "react";
+import {useState, useEffect, forwardRef, useImperativeHandle} from "react";
+import {updateRiderSecurityAction} from "@/app/(server-actions)/(riders-actions)/update-rider-security.action";
 
 const relationships = [
     {label: "Parent", value: "parent"},
@@ -24,46 +25,82 @@ const relationships = [
     {label: "Friend", value: "friend"},
 ];
 
-const AddRiderSecurityInformationForm = () => {
+interface UpdateRiderSecurityInformationFormProps {
+    rider: any;
+    onSaveSuccess?: () => void;
+    setIsPending?: (pending: boolean) => void;
+}
+
+const UpdateRiderSecurityInformationForm = forwardRef<{ submit: () => void }, UpdateRiderSecurityInformationFormProps>(({ rider, onSaveSuccess, setIsPending }, ref) => {
     const [hideSubmitButton, setHideSubmitButton] = useState(false);
 
     const form = useForm<z.infer<typeof RiderSecuritySchema>>({
         resolver: zodResolver(RiderSecuritySchema),
         defaultValues: {
-            relationship: "parent",
-            vehicle: "",
-            vehicle_number: "",
-            vehicle_color: "",
-            id_number: "",
-            drivers_license_number: "",
-            insurance_type: "",
-            insurance_number: "",
-            insurance_expiration: undefined,
-            witness_name: "",
-            witness_contact_number: "",
-            rider_id: localStorage.getItem("added-rider-id") || "",
+            relationship: rider?.security?.relationship || "parent",
+            vehicle: rider?.security?.vehicle || "",
+            vehicle_number: rider?.security?.vehicle_number || "",
+            vehicle_color: rider?.security?.vehicle_color || "",
+            id_number: rider?.security?.id_number || "",
+            drivers_license_number: rider?.security?.drivers_license_number || "",
+            insurance_type: rider?.security?.insurance_type || "",
+            insurance_number: rider?.security?.insurance_number || "",
+            insurance_expiration: rider?.security?.insurance_expiration ? new Date(rider.security.insurance_expiration) : undefined,
+            witness_name: rider?.security?.witness_name || "",
+            witness_contact_number: rider?.security?.witness_contact_number || "",
         },
     });
 
-    const {mutate, isPending} = useMutation({
-        mutationFn: createRiderSecurityInformation,
+    useEffect(() => {
+        if (rider?.security) {
+            form.reset({
+                relationship: rider.security.relationship || "parent",
+                vehicle: rider.security.vehicle || "",
+                vehicle_number: rider.security.vehicle_number || "",
+                vehicle_color: rider.security.vehicle_color || "",
+                id_number: rider.security.id_number || "",
+                drivers_license_number: rider.security.drivers_license_number || "",
+                insurance_type: rider.security.insurance_type || "",
+                insurance_number: rider.security.insurance_number || "",
+                insurance_expiration: rider.security.insurance_expiration ? new Date(rider.security.insurance_expiration) : undefined,
+                witness_name: rider.security.witness_name || "",
+                witness_contact_number: rider.security.witness_contact_number || "",
+            });
+        }
+    }, [rider, form]);
+
+    const updateMutation = useMutation({
+        mutationFn: (values: z.infer<typeof RiderSecuritySchema>) => updateRiderSecurityAction(rider.rider_id, values),
         onSuccess: (data) => {
-            if (data.success) {
-                setHideSubmitButton(true);
-                toast.success("Security information saved successfully");
-            } else if (data.error) {
-                toast.error(data.error);
+            if (data && data.success) {
+                toast.success("Rider security updated successfully", { closeButton: true });
+                onSaveSuccess?.();
+            } else {
+                toast.error(data?.error || "Failed to update rider security", { closeButton: true });
             }
         },
-        onError: () => {
-            toast.error("An unexpected error occurred. Please try again.");
+        onError: (error) => {
+            toast.error("Failed to update rider security", { closeButton: true });
         },
     });
 
-    const onSubmit = (values: z.infer<typeof RiderSecuritySchema>) => {
-        form.setValue("rider_id", localStorage.getItem("added-rider-id") || "");
-        mutate(values);
+    useEffect(() => {
+        if (setIsPending) setIsPending(updateMutation.isPending);
+    }, [updateMutation.isPending, setIsPending]);
+
+    const onSubmit = async (values: z.infer<typeof RiderSecuritySchema>) => {
+        try {
+            updateMutation.mutate(values);
+        } catch (err) {
+            toast.error("Something went wrong. Please try again.", { closeButton: true });
+        }
     };
+
+    useImperativeHandle(ref, () => ({
+        submit: () => {
+            form.handleSubmit(onSubmit)();
+        }
+    }));
 
     return (
         <Form {...form}>
@@ -80,7 +117,7 @@ const AddRiderSecurityInformationForm = () => {
                             <FormItem>
                                 <FormLabel>Vehicle</FormLabel>
                                 <FormControl>
-                                    <Input disabled={isPending || hideSubmitButton}
+                                    <Input disabled={updateMutation.isPending || hideSubmitButton}
                                            placeholder="e.g. Sonia MG-2301" {...field} />
                                 </FormControl>
                                 <FormMessage/>
@@ -94,7 +131,7 @@ const AddRiderSecurityInformationForm = () => {
                             <FormItem>
                                 <FormLabel>Vehicle Number</FormLabel>
                                 <FormControl>
-                                    <Input disabled={isPending || hideSubmitButton}
+                                    <Input disabled={updateMutation.isPending || hideSubmitButton}
                                            placeholder="e.g. ABC-1234" {...field} />
                                 </FormControl>
                                 <FormMessage/>
@@ -112,7 +149,7 @@ const AddRiderSecurityInformationForm = () => {
                             <FormItem>
                                 <FormLabel>Vehicle Color</FormLabel>
                                 <FormControl>
-                                    <Input disabled={isPending || hideSubmitButton} placeholder="e.g. Red" {...field} />
+                                    <Input disabled={updateMutation.isPending || hideSubmitButton} placeholder="e.g. Red" {...field} />
                                 </FormControl>
                                 <FormMessage/>
                             </FormItem>
@@ -125,7 +162,7 @@ const AddRiderSecurityInformationForm = () => {
                             <FormItem>
                                 <FormLabel>ID Number</FormLabel>
                                 <FormControl>
-                                    <Input disabled={isPending || hideSubmitButton}
+                                    <Input disabled={updateMutation.isPending || hideSubmitButton}
                                            placeholder="e.g. GH123456789" {...field} />
                                 </FormControl>
                                 <FormMessage/>
@@ -143,7 +180,7 @@ const AddRiderSecurityInformationForm = () => {
                             <FormItem>
                                 <FormLabel>Driver&#39;s License Number</FormLabel>
                                 <FormControl>
-                                    <Input disabled={isPending || hideSubmitButton}
+                                    <Input disabled={updateMutation.isPending || hideSubmitButton}
                                            placeholder="e.g. DL123456789" {...field} />
                                 </FormControl>
                                 <FormMessage/>
@@ -157,7 +194,7 @@ const AddRiderSecurityInformationForm = () => {
                             <FormItem>
                                 <FormLabel>Insurance Type</FormLabel>
                                 <FormControl>
-                                    <Input disabled={isPending || hideSubmitButton}
+                                    <Input disabled={updateMutation.isPending || hideSubmitButton}
                                            placeholder="e.g. Comprehensive" {...field} />
                                 </FormControl>
                                 <FormMessage/>
@@ -175,7 +212,7 @@ const AddRiderSecurityInformationForm = () => {
                             <FormItem>
                                 <FormLabel>Insurance Number</FormLabel>
                                 <FormControl>
-                                    <Input disabled={isPending || hideSubmitButton}
+                                    <Input disabled={updateMutation.isPending || hideSubmitButton}
                                            placeholder="e.g. INS123456789" {...field} />
                                 </FormControl>
                                 <FormMessage/>
@@ -192,7 +229,7 @@ const AddRiderSecurityInformationForm = () => {
                                     <PopoverTrigger asChild>
                                         <FormControl>
                                             <Button
-                                                disabled={isPending || hideSubmitButton}
+                                                disabled={updateMutation.isPending || hideSubmitButton}
                                                 variant={"outline"}
                                                 className={cn(
                                                     "w-full pl-3 text-left font-normal",
@@ -234,7 +271,7 @@ const AddRiderSecurityInformationForm = () => {
                             <FormItem>
                                 <FormLabel>Witness Name</FormLabel>
                                 <FormControl>
-                                    <Input disabled={isPending || hideSubmitButton}
+                                    <Input disabled={updateMutation.isPending || hideSubmitButton}
                                            placeholder="e.g. John Doe" {...field} />
                                 </FormControl>
                                 <FormMessage/>
@@ -248,7 +285,7 @@ const AddRiderSecurityInformationForm = () => {
                             <FormItem>
                                 <FormLabel>Relationship</FormLabel>
                                 <Select onValueChange={field.onChange} defaultValue={field.value}
-                                        disabled={isPending || hideSubmitButton}>
+                                        disabled={updateMutation.isPending || hideSubmitButton}>
                                     <FormControl>
                                         <SelectTrigger className="w-full">
                                             <SelectValue placeholder="Select relationship"/>
@@ -275,7 +312,7 @@ const AddRiderSecurityInformationForm = () => {
                         <FormItem>
                             <FormLabel>Witness Contact Number</FormLabel>
                             <FormControl>
-                                <Input disabled={isPending || hideSubmitButton}
+                                <Input disabled={updateMutation.isPending || hideSubmitButton}
                                        placeholder="e.g. 233248999999" {...field} />
                             </FormControl>
                             <FormMessage/>
@@ -283,20 +320,23 @@ const AddRiderSecurityInformationForm = () => {
                     )}
                 />
 
-                {
-                    !hideSubmitButton && <Button type="submit" disabled={isPending || hideSubmitButton}>{
-                        isPending ?
+                {!hideSubmitButton && (
+                    <Button type="submit" disabled={updateMutation.isPending} className="w-full">
+                        {updateMutation.isPending ? (
                             <>
                                 <Loader2 className="mr-2 h-4 w-4 animate-spin"/>
-                                <span>Submitting</span>
+                                Updating...
                             </>
-                            : "Submit"
-                    }
+                        ) : (
+                            "Update Rider"
+                        )}
                     </Button>
-                }
+                )}
             </form>
         </Form>
     );
-};
+});
 
-export default AddRiderSecurityInformationForm;
+UpdateRiderSecurityInformationForm.displayName = 'UpdateRiderSecurityInformationForm';
+
+export default UpdateRiderSecurityInformationForm;

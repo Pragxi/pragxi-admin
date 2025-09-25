@@ -1,5 +1,5 @@
 "use client";
-import {useState} from "react";
+import {useState, useEffect} from "react";
 import {toast} from "sonner";
 import {useForm} from "react-hook-form";
 import {zodResolver} from "@hookform/resolvers/zod";
@@ -14,6 +14,7 @@ import {Loader2} from "lucide-react";
 
 import {createRiderFinanceInformation} from "@/app/(server-actions)/(riders-actions)/rider-finance.actions";
 import {RiderFinanceSchema} from "@/types/rider";
+import {updateRiderFinanceAction} from "@/app/(server-actions)/(riders-actions)/update-rider-finance.action";
 
 const serviceProviders = [
     {label: "MTN", value: "mtn"},
@@ -21,24 +22,40 @@ const serviceProviders = [
     {label: "AirtelTigo", value: "airteltigo"},
 ];
 
-const AddRiderFinanceInformationForm = () => {
+interface UpdateRiderFinanceInformationFormProps {
+    rider: any;
+    onSaveSuccess?: () => void;
+}
+
+const UpdateRiderFinanceInformationForm: React.FC<UpdateRiderFinanceInformationFormProps> = ({ rider, onSaveSuccess }) => {
     const [hideSubmitButton, setHideSubmitButton] = useState(false);
 
     const form = useForm<z.infer<typeof RiderFinanceSchema>>({
         resolver: zodResolver(RiderFinanceSchema),
         defaultValues: {
-            service_provider: "mtn",
-            mobile_money_number: "",
-            rider_id: localStorage.getItem("added-rider-id") || "",
+            service_provider: rider?.finance?.service_provider || "mtn",
+            mobile_money_number: rider?.finance?.mobile_money_number || "",
         },
     });
 
-    const {mutate, isPending} = useMutation({
-        mutationFn: createRiderFinanceInformation,
+    useEffect(() => {
+        if (rider?.finance) {
+            form.reset({
+                service_provider: rider.finance.service_provider || "mtn",
+                mobile_money_number: rider.finance.mobile_money_number || "",
+            });
+        }
+    }, [rider, form]);
+
+    const { mutate, isPending } = useMutation({
+        mutationFn: async (values: z.infer<typeof RiderFinanceSchema>) => {
+            return await updateRiderFinanceAction(rider.rider_id, values);
+        },
         onSuccess: (data) => {
             if (data.success) {
-                toast.success("Financial information saved successfully");
+                toast.success("Financial information updated successfully");
                 setHideSubmitButton(true);
+                if (onSaveSuccess) onSaveSuccess();
             } else if (data.error) {
                 toast.error(data.error);
             }
@@ -111,10 +128,10 @@ const AddRiderFinanceInformationForm = () => {
                         {isPending ? (
                             <>
                                 <Loader2 className="mr-2 h-4 w-4 animate-spin"/>
-                                Submitting
+                                Updating...
                             </>
                         ) : (
-                            "Submit"
+                            "Update Rider"
                         )}
                     </Button>
                 )}
@@ -123,4 +140,4 @@ const AddRiderFinanceInformationForm = () => {
     );
 };
 
-export default AddRiderFinanceInformationForm;
+export default UpdateRiderFinanceInformationForm;
