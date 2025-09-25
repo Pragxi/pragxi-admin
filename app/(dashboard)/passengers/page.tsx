@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import Image from 'next/image';
-import { generatePassengers } from "@/dummy/passengers";
+// import { generatePassengers } from "@/dummy/passengers";
 import { Trash } from '@phosphor-icons/react/dist/ssr';
 import {
     Pagination,
@@ -31,40 +31,52 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { redirect } from "next/navigation";
-import { Passenger } from "@/types/passenger";
+// import { Passenger } from "@/types/passenger";
+// Data now fetched via /api/passengers which reads from auth.identities
 
-// Dummy data
-const passengers = generatePassengers(27);
+type PassengerRow = {
+    id: string;
+    name: string;
+    email: string | null;
+    avatar?: string | null;
+    rating?: number | null;
+    status?: string | null;
+    totalRides?: number | null;
+};
 
 const Passengers = () => {
     const [searchTerm, setSearchTerm] = useState('');
+    const [debouncedSearch, setDebouncedSearch] = useState('');
     const [sortConfig, setSortConfig] = useState({ key: '', direction: '' });
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(10);
+    const [rows, setRows] = useState<PassengerRow[]>([]);
+    const [totalCount, setTotalCount] = useState(0);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
 
-    // Search filter
-    const filteredData = useMemo(() => {
-        return passengers.filter(
-            (passenger) =>
-                passenger.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                passenger.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                passenger.phoneNumber.toLowerCase().includes(searchTerm.toLowerCase())
-        );
+    // Debounce search input
+    useEffect(() => {
+        const id = setTimeout(() => setDebouncedSearch(searchTerm), 400);
+        return () => clearTimeout(id);
     }, [searchTerm]);
+
+    // When search changes, jump back to page 1
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [debouncedSearch]);
 
     // Sorting
     const sortedData = useMemo(() => {
-        if (!sortConfig.key) return filteredData;
-        return [...filteredData].sort((a: Passenger, b: Passenger) => {
-            if (a[sortConfig.key] < b[sortConfig.key]) {
-                return sortConfig.direction === 'asc' ? -1 : 1;
-            }
-            if (a[sortConfig.key] > b[sortConfig.key]) {
-                return sortConfig.direction === 'asc' ? 1 : -1;
-            }
+        if (!sortConfig.key) return rows;
+        return [...rows].sort((a: any, b: any) => {
+            const av = a[sortConfig.key] ?? '';
+            const bv = b[sortConfig.key] ?? '';
+            if (av < bv) return sortConfig.direction === 'asc' ? -1 : 1;
+            if (av > bv) return sortConfig.direction === 'asc' ? 1 : -1;
             return 0;
         });
-    }, [filteredData, sortConfig]);
+    }, [rows, sortConfig]);
 
     useEffect(() => {
         const storedItemsPerPage = localStorage.getItem('passengers-itemsPerPage');
@@ -72,6 +84,42 @@ const Passengers = () => {
             setItemsPerPage(Number(storedItemsPerPage));
         }
     }, []);
+
+    // Fetch passengers from API (reads auth.identities with JSON filtering)
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                setLoading(true);
+                setError(null);
+                const params = new URLSearchParams({
+                    page: String(currentPage),
+                    pageSize: String(itemsPerPage),
+                    q: debouncedSearch,
+                });
+                const res = await fetch(`/api/passengers?${params.toString()}`);
+                const body = await res.json();
+                if (!res.ok) throw new Error(body?.error || 'Failed to load passengers');
+
+                const mapped: PassengerRow[] = (body.rows ?? []).map((u: any) => ({
+                    id: u.id,
+                    name: u.name ?? '-',
+                    email: u.email ?? null,
+                    avatar: `${location.origin}/api/avatar/${u.id}`,
+                    rating: null,
+                    status: null,
+                    totalRides: null,
+                }));
+
+                setRows(mapped);
+                setTotalCount(body.total ?? 0);
+            } catch (e: any) {
+                setError(e?.message || 'Failed to load passengers');
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchData();
+    }, [currentPage, itemsPerPage, debouncedSearch]);
 
     // Pagination
     const paginatedData = useMemo(() => {
@@ -157,7 +205,7 @@ const Passengers = () => {
                 </div>
             </div>
 
-            {/* Riders Table */}
+            {/* Passengers Table */}
             <Table className="motion-preset-blur-up" suppressHydrationWarning>
                 <TableHeader>
                     <TableRow className="bg-gray-100 dark:bg-zinc-800 cursor-pointer rounded-2xl">
@@ -187,11 +235,26 @@ const Passengers = () => {
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    {paginatedData.map((passenger) => (
+                    {loading && (
+                        <TableRow>
+                            <TableCell colSpan={7}>Loading...</TableCell>
+                        </TableRow>
+                    )}
+                    {!loading && error && (
+                        <TableRow>
+                            <TableCell colSpan={7} className="text-red-500">{error}</TableCell>
+                        </TableRow>
+                    )}
+                    {!loading && !error && sortedData.length === 0 && (
+                        <TableRow>
+                            <TableCell colSpan={7}>No passengers found</TableCell>
+                        </TableRow>
+                    )}
+                    {!loading && !error && sortedData.map((passenger) => (
                         <TableRow key={passenger.id}>
                             <TableCell suppressHydrationWarning>
                                 <Image
-                                    src={passenger.avatar}
+                                    src={`${location.origin}/api/avatar/${passenger.id}`}
                                     alt={`${passenger.name}'s avatar`}
                                     width={40}
                                     height={40}
@@ -199,28 +262,28 @@ const Passengers = () => {
                                 />
                             </TableCell>
                             <TableCell>{passenger.name}</TableCell>
-                            <TableCell>{passenger.email}</TableCell>
+                            <TableCell>{passenger.email ?? '-'}</TableCell>
                             <TableCell>
                                 {Array.from({ length: 5 }, (_, i) => (
                                     <Star
                                         weight="fill"
                                         key={i}
-                                        className={i < Math.floor(passenger.rating) ?
+                                        className={i < Math.floor(passenger?.rating || 0) ?
                                             'text-yellow-500 inline-block' :
                                             'text-gray-300 inline-block'}
                                         size={16}
                                     />
                                 ))}
-                                <span className="ml-2">{passenger.rating}</span>
+                                <span className="ml-2">{passenger?.rating ?? '-'}</span>
                             </TableCell>
                             <TableCell>
                                 <Badge
-                                    variant={passenger.status === 'online' ? "outline_success" : "outline_destructive"}
+                                    variant={passenger?.status === 'online' ? "outline_success" : "outline_destructive"}
                                 >
-                                    {passenger.status}
+                                    {passenger?.status ?? 'offline'}
                                 </Badge>
                             </TableCell>
-                            <TableCell>{passenger.totalRides}</TableCell>
+                            <TableCell>{passenger?.totalRides ?? '-'}</TableCell>
                             <TableCell>
                                 <div className="flex gap-2">
                                     <TooltipProvider>
@@ -325,11 +388,11 @@ const Passengers = () => {
                                 onClick={() => setCurrentPage(currentPage - 1)}>{currentPage - 1}</PaginationLink>
                         )}
                         <PaginationLink isActive className='border-0'>{currentPage}</PaginationLink>
-                        {currentPage < Math.ceil(sortedData.length / itemsPerPage) && (
+                        {currentPage < Math.ceil(totalCount / itemsPerPage) && (
                             <PaginationLink isActive className='border-0'
                                 onClick={() => setCurrentPage(currentPage + 1)}>{currentPage + 1}</PaginationLink>
                         )}
-                        {currentPage < Math.ceil(sortedData.length / itemsPerPage) - 1 && (
+                        {currentPage < Math.ceil(totalCount / itemsPerPage) - 1 && (
                             <PaginationLink isActive className='border-0'
                                 onClick={() => setCurrentPage(currentPage + 2)}>{currentPage + 2}</PaginationLink>
                         )}
@@ -337,17 +400,17 @@ const Passengers = () => {
                     <PaginationItem className='cursor-pointer'>
                         <PaginationNext
                             onClick={() => setCurrentPage(prev =>
-                                Math.min(prev + 1, Math.ceil(sortedData.length / itemsPerPage))
+                                Math.min(prev + 1, Math.ceil(totalCount / itemsPerPage))
                             )}
-                            isActive={currentPage < Math.ceil(sortedData.length / itemsPerPage)}
+                            isActive={currentPage < Math.ceil(totalCount / itemsPerPage)}
                         />
                     </PaginationItem>
                     <PaginationItem className='cursor-pointer'>
                         <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => setCurrentPage(Math.ceil(sortedData.length / itemsPerPage))}
-                            disabled={currentPage === Math.ceil(sortedData.length / itemsPerPage)}
+                            onClick={() => setCurrentPage(Math.ceil(totalCount / itemsPerPage))}
+                            disabled={currentPage === Math.ceil(totalCount / itemsPerPage)}
                         >
                             Last
                         </Button>
