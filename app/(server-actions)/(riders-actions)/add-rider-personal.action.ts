@@ -1,11 +1,17 @@
 "use server";
 
-import {createClient} from "@/utils/supabase/server";
-import {RiderInfoSchema} from "@/types/rider";
+import { createClient } from "@/utils/supabase/server";
+import { RiderInfoSchema } from "@/types/rider";
 import * as z from "zod";
-import {createServiceRoleClient} from "@/utils/supabase/service-role";
+import { createServiceRoleClient } from "@/utils/supabase/service-role";
+import { Resend } from "resend";
+import RiderCredentialsEmail from "@/components/emails/rider-credentials-email";
+import { sendEmailAction } from "../(utils)/sendEmail.action";
+import { render } from "@react-email/render";
 
 export const addRiderPersonalAction = async (formData: z.infer<typeof RiderInfoSchema>) => {
+
+    // const resend = new Resend(process.env.RESEND_API_KEY);
     const rawFormData = formData;
 
     const parsedData = RiderInfoSchema.safeParse({
@@ -25,13 +31,13 @@ export const addRiderPersonalAction = async (formData: z.infer<typeof RiderInfoS
 
     try {
         // First, check if email already exists in riders_personal_information and users tables
-        const {data: existingUser, error: userLookupError} = await supabase
+        const { data: existingUser, error: userLookupError } = await supabase
             .from('users')
             .select('email')
             .eq('email', parsedData.data.email)
             .maybeSingle();
 
-        const {data: existingRiderPersonalInformation, error: riderInfoLookupError} = await supabase
+        const { data: existingRiderPersonalInformation, error: riderInfoLookupError } = await supabase
             .from('riders_personal_information')
             .select('email')
             .eq('email', parsedData.data.email)
@@ -71,12 +77,12 @@ export const addRiderPersonalAction = async (formData: z.infer<typeof RiderInfoS
         const password = generateRandomPassword();
 
         // Log generated credentials
-        console.log('Generated credentials:', {email: parsedData.data.email, password});
+        console.log('Generated credentials:', { email: parsedData.data.email, password });
 
         console.log('Parsed data:', parsedData.data);
 
         // Sign up the user
-        const {data: authData, error: authError} = await supabase.auth.signUp({
+        const { data: authData, error: authError } = await supabase.auth.signUp({
             email: parsedData.data.email,
             password: password,
             options: {
@@ -109,7 +115,7 @@ export const addRiderPersonalAction = async (formData: z.infer<typeof RiderInfoS
         // ===================================================================
 
         // Insert rider personal information
-        const {error: riderError} = await supabase
+        const { error: riderError } = await supabase
             .from('riders_personal_information')
             .insert({
                 first_name: parsedData.data.first_name,
@@ -142,13 +148,54 @@ export const addRiderPersonalAction = async (formData: z.infer<typeof RiderInfoS
             };
         }
 
-        return {
-            success: true,
-            data: {
-                user_id: authData.user.id,
-                email: parsedData.data.email,
-            },
-        };
+        try {
+            // const { data, error } = await resend.emails.send({
+            //     from: 'Pragxi <onboarding@resend.dev>',
+            //     to: [parsedData.data.email],
+            //     subject: 'Account Credentials',
+            //     react: RiderCredentialsEmail({
+            //         email: parsedData.data.email,
+            //         password: password,
+            //         name: parsedData.data.first_name,
+            //     }),
+            // });
+
+            const html = await render(
+                RiderCredentialsEmail({
+                    email: parsedData.data.email,
+                    password: password,
+                    name: parsedData.data.first_name,
+                })
+            );
+
+            const { success, message } = await sendEmailAction({
+                from: 'Pragxi <info@pragxi.com>',
+                to: parsedData.data.email,
+                subject: 'Account Credentials',
+                text: 'Account Credentials',
+                html: html,
+            })
+
+            if (!success) {
+                return {
+                    success: false,
+                    error: message,
+                };
+            }
+
+            return {
+                success: true,
+                data: {
+                    user_id: authData.user.id,
+                    email: parsedData.data.email,
+                },
+            };
+        } catch (error) {
+            return {
+                success: false,
+                error: "An unexpected error occurred. Please try again.",
+            };
+        }
 
     } catch (error: unknown) {
         // Log the error

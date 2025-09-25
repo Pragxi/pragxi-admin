@@ -27,16 +27,16 @@ export async function DELETE(_req: Request, context: { params: Promise<{ id: str
     }
 
     // Delete from users table (if applicable)
-    // const { error: userTableError } = await supabase.from('users').delete().eq('id', rider_id)
-    // if (userTableError) {
-    //   return NextResponse.json({ error: `Failed to delete from users table: ${userTableError.message}` }, { status: 500 })
-    // }
+    const { error: userTableError } = await supabase.from('users').delete().eq('id', rider_id)
+    if (userTableError) {
+      return NextResponse.json({ error: `Failed to delete from users table: ${userTableError.message}` }, { status: 500 })
+    }
 
     // Delete from Auth
-    // const { error: authError } = await supabase.auth.admin.deleteUser(rider_id)
-    // if (authError) {
-    //   return NextResponse.json({ error: `Failed to delete auth user: ${authError.message}` }, { status: 500 })
-    // }
+    const { error: authError } = await supabase.auth.admin.deleteUser(rider_id)
+    if (authError) {
+      return NextResponse.json({ error: `Failed to delete auth user: ${authError.message}` }, { status: 500 })
+    }
 
     return NextResponse.json({ success: true })
   } catch (e: any) {
