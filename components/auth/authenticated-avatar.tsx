@@ -18,7 +18,6 @@ import {logoutAction} from "@/app/(server-actions)/(auth-actions)/logout.action"
 import {useRouter} from "next/navigation"
 import {toast} from "sonner";
 import {Skeleton} from "@/components/ui/skeleton"
-import {updateMetaData} from "@/app/(server-actions)/(auth-actions)/test";
 
 const AuthenticatedAvatar = () => {
     const {isMobile} = useSidebar()
@@ -28,13 +27,6 @@ const AuthenticatedAvatar = () => {
         queryKey: ['logged-in-user'],
         queryFn: getUserDataAction,
     });
-
-    const {data} = useQuery({
-        queryKey: ['admin-role'],
-        queryFn: updateMetaData,
-    });
-
-    console.log({data})
 
     if (isLoading) return (
         <SidebarMenu>
@@ -66,7 +58,6 @@ const AuthenticatedAvatar = () => {
             },
         );
     }
-
 
     return (
         <SidebarMenu>

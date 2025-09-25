@@ -18,5 +18,9 @@ export async function getRiderById(rider_id: string) {
     .eq("rider_id", rider_id)
     .maybeSingle();
 
-  return { personal, security };
+  return { 
+    rider_id,
+    personal, 
+    security 
+  };
 }
