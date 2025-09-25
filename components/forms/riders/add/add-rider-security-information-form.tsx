@@ -48,23 +48,26 @@ const UpdateRiderSecurityInformationForm = forwardRef<{ submit: () => void }, Up
             insurance_expiration: rider?.security?.insurance_expiration ? new Date(rider.security.insurance_expiration) : undefined,
             witness_name: rider?.security?.witness_name || "",
             witness_contact_number: rider?.security?.witness_contact_number || "",
+            rider_id: rider?.rider_id || "",
         },
     });
 
     useEffect(() => {
-        if (rider?.security) {
+        if (rider) {
+            const s = rider.security || {};
             form.reset({
-                relationship: rider.security.relationship || "parent",
-                vehicle: rider.security.vehicle || "",
-                vehicle_number: rider.security.vehicle_number || "",
-                vehicle_color: rider.security.vehicle_color || "",
-                id_number: rider.security.id_number || "",
-                drivers_license_number: rider.security.drivers_license_number || "",
-                insurance_type: rider.security.insurance_type || "",
-                insurance_number: rider.security.insurance_number || "",
-                insurance_expiration: rider.security.insurance_expiration ? new Date(rider.security.insurance_expiration) : undefined,
-                witness_name: rider.security.witness_name || "",
-                witness_contact_number: rider.security.witness_contact_number || "",
+                relationship: s.relationship || "parent",
+                vehicle: s.vehicle || "",
+                vehicle_number: s.vehicle_number || "",
+                vehicle_color: s.vehicle_color || "",
+                id_number: s.id_number || "",
+                drivers_license_number: s.drivers_license_number || "",
+                insurance_type: s.insurance_type || "",
+                insurance_number: s.insurance_number || "",
+                insurance_expiration: s.insurance_expiration ? new Date(s.insurance_expiration) : undefined,
+                witness_name: s.witness_name || "",
+                witness_contact_number: s.witness_contact_number || "",
+                rider_id: rider.rider_id || "",
             });
         }
     }, [rider, form]);
@@ -74,6 +77,7 @@ const UpdateRiderSecurityInformationForm = forwardRef<{ submit: () => void }, Up
         onSuccess: (data) => {
             if (data && data.success) {
                 toast.success("Rider security updated successfully", { closeButton: true });
+                setHideSubmitButton(true);
                 onSaveSuccess?.();
             } else {
                 toast.error(data?.error || "Failed to update rider security", { closeButton: true });

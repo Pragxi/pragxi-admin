@@ -12,7 +12,11 @@ import {CloudUpload, Loader2, Paperclip} from "lucide-react";
 import {createRiderDocuments} from "@/app/(server-actions)/(riders-actions)/rider-document.actions";
 import {RiderDocumentSchema} from "@/types/rider";
 
-const AddRiderDocumentsForm = () => {
+interface AddRiderDocumentsFormProps {
+    onSaveSuccess?: () => void;
+}
+
+const AddRiderDocumentsForm: React.FC<AddRiderDocumentsFormProps> = ({ onSaveSuccess }) => {
     const [hideSubmitButton, setHideSubmitButton] = useState(false);
     const [idCardFiles, setIdCardFiles] = useState<File[]>([]);
     const [driversLicenseFiles, setDriversLicenseFiles] = useState<File[]>([]);
@@ -67,6 +71,7 @@ const AddRiderDocumentsForm = () => {
                 setDriversLicenseFiles([]);
                 setInsuranceFiles([]);
                 setProfilePicture([]);
+                onSaveSuccess?.();
             } else if (data.error) {
                 toast.error(data.error);
             }

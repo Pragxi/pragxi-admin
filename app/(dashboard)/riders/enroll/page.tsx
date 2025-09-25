@@ -8,6 +8,7 @@ import {Tabs, TabsContent, TabsList, TabsTrigger} from "@/components/ui/tabs";
 // import AddRiderDocumentsForm from "@/components/forms/riders/add/add-rider-documents-form";
 import dynamic from "next/dynamic";
 import { getRiderById } from "@/app/(server-actions)/(riders-actions)/get-rider-by-id.action";
+import { Button } from "@/components/ui/button";
 
 const AddRiderPersonalInformationForm = dynamic(
     () => import('@/components/forms/riders/add/add-rider-personal-information-form'),
@@ -33,6 +34,12 @@ const EnrollRider = () => {
     const [activeTab, setActiveTab] = useState("personal_information");
     const [rider, setRider] = useState<any>(null);
     const [isFetchingRider, setIsFetchingRider] = useState(false);
+    const [completed, setCompleted] = useState({
+        personal: false,
+        security: false,
+        document: false,
+        finance: false,
+    });
 
     // Called after personal info is saved
     const handlePersonalInfoSaved = useCallback(async () => {
@@ -42,13 +49,28 @@ const EnrollRider = () => {
             try {
                 const fetchedRider = await getRiderById(riderId);
                 setRider(fetchedRider);
+                setCompleted((c) => ({ ...c, personal: true }));
+                setActiveTab("security_information");
             } catch (err) {
-                // Optionally handle error
                 setRider(null);
             } finally {
                 setIsFetchingRider(false);
             }
         }
+    }, []);
+
+    const handleSecuritySaved = useCallback(() => {
+        setCompleted((c) => ({ ...c, security: true }));
+        setActiveTab("document");
+    }, []);
+
+    const handleDocumentsSaved = useCallback(() => {
+        setCompleted((c) => ({ ...c, document: true }));
+        setActiveTab("finance");
+    }, []);
+
+    const handleFinanceSaved = useCallback(() => {
+        setCompleted((c) => ({ ...c, finance: true }));
     }, []);
 
     return (
@@ -86,7 +108,7 @@ const EnrollRider = () => {
                                 data-[state=active]:shadow-none data-[state=active]:border-b-2
                                 data-[state=active]:border-b-primary
                                 data-[state=inactive]:text-gray-500"
-                        disabled={!rider}
+                        disabled={!rider || !completed.personal}
                     >
                         Security Information
                     </TabsTrigger>
@@ -96,7 +118,7 @@ const EnrollRider = () => {
                                 data-[state=active]:shadow-none data-[state=active]:border-b-2
                                 data-[state=active]:border-b-primary
                                 data-[state=inactive]:text-gray-500"
-                        disabled={!rider}
+                        disabled={!rider || !completed.security}
                     >
                         Document
                     </TabsTrigger>
@@ -106,7 +128,7 @@ const EnrollRider = () => {
                                 data-[state=active]:shadow-none data-[state=active]:border-b-2
                                 data-[state=active]:border-b-primary
                                 data-[state=inactive]:text-gray-500"
-                        disabled={!rider}
+                        disabled={!rider || !completed.document}
                     >
                         Finance
                     </TabsTrigger>
@@ -118,6 +140,11 @@ const EnrollRider = () => {
                     hidden={activeTab !== "personal_information"}
                 >
                     <AddRiderPersonalInformationForm onSaveSuccess={handlePersonalInfoSaved} />
+                    {completed.personal && (
+                        <div className="mt-4 flex justify-end">
+                            <Button onClick={() => setActiveTab("security_information")}>Continue to Security</Button>
+                        </div>
+                    )}
                 </TabsContent>
 
                 <TabsContent
@@ -125,7 +152,13 @@ const EnrollRider = () => {
                     forceMount
                     hidden={activeTab !== "security_information"}
                 >
-                    <AddRiderSecurityInformationForm rider={rider} />
+                    <AddRiderSecurityInformationForm rider={rider} onSaveSuccess={handleSecuritySaved} />
+                    {completed.security && (
+                        <div className="mt-4 flex justify-between">
+                            <Button variant="outline" onClick={() => setActiveTab("personal_information")}>Back</Button>
+                            <Button onClick={() => setActiveTab("document")}>Continue to Documents</Button>
+                        </div>
+                    )}
                 </TabsContent>
 
                 <TabsContent
@@ -133,7 +166,13 @@ const EnrollRider = () => {
                     forceMount
                     hidden={activeTab !== "document"}
                 >
-                    <AddRiderDocumentsForm />
+                    <AddRiderDocumentsForm onSaveSuccess={handleDocumentsSaved} />
+                    {completed.document && (
+                        <div className="mt-4 flex justify-between">
+                            <Button variant="outline" onClick={() => setActiveTab("security_information")}>Back</Button>
+                            <Button onClick={() => setActiveTab("finance")}>Continue to Finance</Button>
+                        </div>
+                    )}
                 </TabsContent>
 
                 <TabsContent
@@ -141,7 +180,13 @@ const EnrollRider = () => {
                     forceMount
                     hidden={activeTab !== "finance"}
                 >
-                    <AddRiderFinanceInformationForm rider={rider} />
+                    <AddRiderFinanceInformationForm rider={rider} onSaveSuccess={handleFinanceSaved} />
+                    {completed.finance && (
+                        <div className="mt-4 flex justify-between">
+                            <Button variant="outline" onClick={() => setActiveTab("document")}>Back</Button>
+                            <Button disabled>All Steps Completed</Button>
+                        </div>
+                    )}
                 </TabsContent>
             </Tabs>
         </div>

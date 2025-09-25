@@ -18,21 +18,45 @@ export const updateRiderFinanceAction = async (riderId: string, formData: z.infe
     const supabase = await createClient();
 
     try {
-        // Update rider finance information
-        const {error: financeError} = await supabase
-            .from('riders_finance_information')
-            .update({
-                service_provider: parsedData.data.service_provider,
-                mobile_money_number: parsedData.data.mobile_money_number,
-            })
-            .eq('rider_id', riderId);
+        const payload = {
+            service_provider: parsedData.data.service_provider,
+            mobile_money_number: parsedData.data.mobile_money_number,
+        };
 
-        if (financeError) {
-            console.log("Failed to update rider finance:", financeError.message);
+        // Try update first
+        const { error: updateError, data: updateResult } = await supabase
+            .from('riders_financial_information')
+            .update(payload)
+            .eq('rider_id', riderId)
+            .select();
+
+        if (updateError) {
+            console.log("Failed to update rider finance:", updateError.message);
             return {
                 success: false,
                 error: "Failed to update rider finance information - please try again later",
             };
+        }
+
+        // If no row was updated, insert a new one
+        if (!updateResult || updateResult.length === 0) {
+            const { error: insertError, data: insertResult } = await supabase
+                .from('riders_financial_information')
+                .insert({
+                    rider_id: riderId,
+                    ...payload,
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString(),
+                })
+                .select();
+
+            if (insertError) {
+                console.log("Failed to insert rider finance:", insertError.message);
+                return {
+                    success: false,
+                    error: "Failed to create rider finance information - please try again later",
+                };
+            }
         }
 
         return {

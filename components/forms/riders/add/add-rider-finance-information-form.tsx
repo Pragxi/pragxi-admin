@@ -35,14 +35,17 @@ const UpdateRiderFinanceInformationForm: React.FC<UpdateRiderFinanceInformationF
         defaultValues: {
             service_provider: rider?.finance?.service_provider || "mtn",
             mobile_money_number: rider?.finance?.mobile_money_number || "",
+            rider_id: rider?.rider_id || "",
         },
     });
 
     useEffect(() => {
-        if (rider?.finance) {
+        if (rider) {
+            const f = rider.finance || {};
             form.reset({
-                service_provider: rider.finance.service_provider || "mtn",
-                mobile_money_number: rider.finance.mobile_money_number || "",
+                service_provider: f.service_provider || "mtn",
+                mobile_money_number: f.mobile_money_number || "",
+                rider_id: rider.rider_id || "",
             });
         }
     }, [rider, form]);
