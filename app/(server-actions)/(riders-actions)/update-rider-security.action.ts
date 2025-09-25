@@ -42,8 +42,8 @@ export const updateRiderSecurityAction = async (riderId: string, formData: z.inf
             };
         }
 
-        // Update rider security information
-        const updateData = {
+        // Build payload
+        const payload = {
             vehicle: parsedData.data.vehicle,
             vehicle_number: parsedData.data.vehicle_number,
             vehicle_color: parsedData.data.vehicle_color,
@@ -57,27 +57,46 @@ export const updateRiderSecurityAction = async (riderId: string, formData: z.inf
             witness_phone_number: parsedData.data.witness_contact_number,
         };
 
-        console.log("Attempting to update with data:", updateData);
+        console.log("Attempting to upsert with data:", payload);
         console.log("Looking for rider_id:", riderId);
 
-        const { error: securityError, data: updateResult } = await supabase
+        // Try update first
+        const { error: updateError, data: updateResult } = await supabase
             .from('riders_security_information')
-            .update(updateData)
+            .update(payload)
             .eq('rider_id', riderId)
             .select();
 
-        console.log("Update result:", { updateResult, securityError });
+        console.log("Update result:", { updateResult, updateError });
 
-        if (securityError) {
-            console.log("Failed to update rider security:", securityError.message);
-            console.log("Error details:", securityError);
+        if (updateError) {
+            console.log("Update error (will not attempt insert due to error):", updateError.message);
             return {
                 success: false,
                 error: "Failed to update rider security information - please try again later",
             };
         }
 
-        console.log("Update successful:", updateResult);
+        // If no row was updated, insert a new one
+        if (!updateResult || updateResult.length === 0) {
+            console.log("No existing security row, inserting new row for rider_id:", riderId);
+            const { error: insertError, data: insertResult } = await supabase
+                .from('riders_security_information')
+                .insert({
+                    rider_id: riderId,
+                    ...payload,
+                })
+                .select();
+
+            console.log("Insert result:", { insertResult, insertError });
+
+            if (insertError) {
+                return {
+                    success: false,
+                    error: "Failed to create rider security information - please try again later",
+                };
+            }
+        }
 
         return {
             success: true,

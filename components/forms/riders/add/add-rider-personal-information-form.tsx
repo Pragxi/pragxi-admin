@@ -86,6 +86,8 @@ const AddRiderPersonalInformationForm = forwardRef<{ submit: () => void }, AddRi
                 toast.success("Rider created successfully", {
                     closeButton: true
                 });
+                // notify parent so it can fetch rider and advance stepper
+                onSaveSuccess?.();
             }
         },
         onError: () => {
