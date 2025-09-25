@@ -18,7 +18,6 @@ import {logoutAction} from "@/app/(server-actions)/(auth-actions)/logout.action"
 import {useRouter} from "next/navigation"
 import {toast} from "sonner";
 import {Skeleton} from "@/components/ui/skeleton"
-import {updateMetaData} from "@/app/(server-actions)/(auth-actions)/test";
 
 const AuthenticatedAvatar = () => {
     const {isMobile} = useSidebar()
