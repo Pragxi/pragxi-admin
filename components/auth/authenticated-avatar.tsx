@@ -29,12 +29,10 @@ const AuthenticatedAvatar = () => {
         queryFn: getUserDataAction,
     });
 
-    const {data} = useQuery({
-        queryKey: ['admin-role'],
-        queryFn: updateMetaData,
-    });
-
-    console.log({data})
+    // const {data} = useQuery({
+    //     queryKey: ['admin-role'],
+    //     queryFn: updateMetaData,
+    // });
 
     if (isLoading) return (
         <SidebarMenu>

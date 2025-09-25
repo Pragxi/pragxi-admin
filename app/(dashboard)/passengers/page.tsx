@@ -1,13 +1,13 @@
 "use client";
 
-import {useEffect, useMemo, useState} from 'react';
-import {Input} from '@/components/ui/input';
-import {Button} from '@/components/ui/button';
-import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow,} from '@/components/ui/table';
-import {Badge} from '@/components/ui/badge';
+import { useEffect, useMemo, useState } from 'react';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, } from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
 import Image from 'next/image';
-import {generatePassengers} from "@/dummy/passengers";
-import {Trash} from '@phosphor-icons/react/dist/ssr';
+import { generatePassengers } from "@/dummy/passengers";
+import { Trash } from '@phosphor-icons/react/dist/ssr';
 import {
     Pagination,
     PaginationContent,
@@ -16,9 +16,9 @@ import {
     PaginationNext,
     PaginationPrevious
 } from '@/components/ui/pagination';
-import {Tooltip, TooltipContent, TooltipProvider, TooltipTrigger,} from "@/components/ui/tooltip"
-import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from '@/components/ui/select';
-import {Eye, Star} from "@phosphor-icons/react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger, } from "@/components/ui/tooltip"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Eye, Star } from "@phosphor-icons/react";
 import {
     Dialog,
     DialogClose,
@@ -28,18 +28,17 @@ import {
     DialogHeader,
     DialogTitle,
     DialogTrigger,
-} from "@/components/ui/dialog"
-import {DialogBody} from "next/dist/client/components/react-dev-overlay/ui/components/dialog";
-import toast from "react-hot-toast";
-import {redirect} from "next/navigation";
-import {Passenger} from "@/types/passenger";
+} from "@/components/ui/dialog";
+import { toast } from "sonner";
+import { redirect } from "next/navigation";
+import { Passenger } from "@/types/passenger";
 
 // Dummy data
 const passengers = generatePassengers(27);
 
 const Passengers = () => {
     const [searchTerm, setSearchTerm] = useState('');
-    const [sortConfig, setSortConfig] = useState({key: '', direction: ''});
+    const [sortConfig, setSortConfig] = useState({ key: '', direction: '' });
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(10);
 
@@ -82,7 +81,7 @@ const Passengers = () => {
 
     const handleSort = (key: string) => {
         const direction = sortConfig.key === key && sortConfig.direction === 'asc' ? 'desc' : 'asc';
-        setSortConfig({key, direction});
+        setSortConfig({ key, direction });
     };
 
     const handleSetItemsPerPage = (value: number) => {
@@ -144,7 +143,7 @@ const Passengers = () => {
                         }}
                     >
                         <SelectTrigger className="w-[180px] motion-preset-blur-right delay-100">
-                            <SelectValue placeholder="Rows per page"/>
+                            <SelectValue placeholder="Rows per page" />
                         </SelectTrigger>
                         <SelectContent>
                             {[5, 10, 20, 50].map((pageSize) => (
@@ -165,24 +164,24 @@ const Passengers = () => {
                         <TableHead>Avatar</TableHead>
                         <TableHead onClick={() => handleSort('name')}>
                             Name {sortConfig.key === 'name' && (
-                            <span>{sortConfig.direction === 'asc' ? '▲' : '▼'}</span>
-                        )}
+                                <span>{sortConfig.direction === 'asc' ? '▲' : '▼'}</span>
+                            )}
                         </TableHead>
                         <TableHead onClick={() => handleSort('email')}>
                             Email {sortConfig.key === 'email' && (
-                            <span>{sortConfig.direction === 'asc' ? '▲' : '▼'}</span>
-                        )}
+                                <span>{sortConfig.direction === 'asc' ? '▲' : '▼'}</span>
+                            )}
                         </TableHead>
                         <TableHead onClick={() => handleSort('rating')}>
                             Rating {sortConfig.key === 'rating' && (
-                            <span>{sortConfig.direction === 'asc' ? '▲' : '▼'}</span>
-                        )}
+                                <span>{sortConfig.direction === 'asc' ? '▲' : '▼'}</span>
+                            )}
                         </TableHead>
                         <TableHead>Status</TableHead>
                         <TableHead onClick={() => handleSort('totalRides')}>
                             Total Rides {sortConfig.key === 'totalRides' && (
-                            <span>{sortConfig.direction === 'asc' ? '▲' : '▼'}</span>
-                        )}
+                                <span>{sortConfig.direction === 'asc' ? '▲' : '▼'}</span>
+                            )}
                         </TableHead>
                         <TableHead>Actions</TableHead>
                     </TableRow>
@@ -202,7 +201,7 @@ const Passengers = () => {
                             <TableCell>{passenger.name}</TableCell>
                             <TableCell>{passenger.email}</TableCell>
                             <TableCell>
-                                {Array.from({length: 5}, (_, i) => (
+                                {Array.from({ length: 5 }, (_, i) => (
                                     <Star
                                         weight="fill"
                                         key={i}
@@ -234,7 +233,7 @@ const Passengers = () => {
                                                     className="rounded-full"
                                                     onClick={() => redirect(`/passengers/profile/${passenger.id}`)}
                                                 >
-                                                    <Eye size={32} weight="duotone"/>
+                                                    <Eye size={32} weight="duotone" />
                                                 </Button>
                                             </TooltipTrigger>
                                             <TooltipContent>
@@ -251,7 +250,7 @@ const Passengers = () => {
                                                 <Tooltip>
                                                     <TooltipTrigger asChild>
                                                         <Button variant="ghost" size="icon" className="rounded-full">
-                                                            <Trash size={32} weight="duotone"/>
+                                                            <Trash size={32} weight="duotone" />
                                                         </Button>
                                                     </TooltipTrigger>
                                                     <TooltipContent>
@@ -264,7 +263,7 @@ const Passengers = () => {
                                                 <DialogHeader>
                                                     <DialogTitle>Are you absolutely sure?</DialogTitle>
                                                 </DialogHeader>
-                                                <DialogBody>
+                                                <div>
                                                     <DialogDescription>
                                                         You&#39;re trying to delete a passenger&#39;s account.
                                                         <p>
@@ -272,7 +271,7 @@ const Passengers = () => {
                                                             passenger and disable the passenger&#39;s account.
                                                         </p>
                                                     </DialogDescription>
-                                                </DialogBody>
+                                                </div>
                                                 <DialogFooter>
                                                     <div className="flex gap-2">
                                                         <DialogClose asChild>
@@ -319,20 +318,20 @@ const Passengers = () => {
                     <PaginationItem className='cursor-pointer flex gap-1'>
                         {currentPage > 2 && (
                             <PaginationLink isActive className='border-0'
-                                            onClick={() => setCurrentPage(currentPage - 2)}>{currentPage - 2}</PaginationLink>
+                                onClick={() => setCurrentPage(currentPage - 2)}>{currentPage - 2}</PaginationLink>
                         )}
                         {currentPage > 1 && (
                             <PaginationLink isActive className='border-0'
-                                            onClick={() => setCurrentPage(currentPage - 1)}>{currentPage - 1}</PaginationLink>
+                                onClick={() => setCurrentPage(currentPage - 1)}>{currentPage - 1}</PaginationLink>
                         )}
                         <PaginationLink isActive className='border-0'>{currentPage}</PaginationLink>
                         {currentPage < Math.ceil(sortedData.length / itemsPerPage) && (
                             <PaginationLink isActive className='border-0'
-                                            onClick={() => setCurrentPage(currentPage + 1)}>{currentPage + 1}</PaginationLink>
+                                onClick={() => setCurrentPage(currentPage + 1)}>{currentPage + 1}</PaginationLink>
                         )}
                         {currentPage < Math.ceil(sortedData.length / itemsPerPage) - 1 && (
                             <PaginationLink isActive className='border-0'
-                                            onClick={() => setCurrentPage(currentPage + 2)}>{currentPage + 2}</PaginationLink>
+                                onClick={() => setCurrentPage(currentPage + 2)}>{currentPage + 2}</PaginationLink>
                         )}
                     </PaginationItem>
                     <PaginationItem className='cursor-pointer'>

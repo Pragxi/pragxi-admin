@@ -26,9 +26,8 @@ import {
     DialogHeader,
     DialogTitle,
     DialogTrigger,
-} from "@/components/ui/dialog"
-import { DialogBody } from "next/dist/client/components/react-dev-overlay/ui/components/dialog";
-import toast from "react-hot-toast";
+} from "@/components/ui/dialog";
+import {toast} from "sonner";
 import { redirect } from "next/navigation";
 import { Link } from "next-view-transitions";
 import { createClient } from "@/utils/supabase/client";
@@ -157,26 +156,36 @@ const Riders = () => {
         setItemsPerPage(value);
     }
 
-    // Function to delete a rider with a simulated API call (success or failure randomly simulated)
-    const deleteRider = () => {
-        return new Promise((resolve, reject) => {
-            setTimeout(() => {
+    // Call API to delete a rider from auth and all rider tables
+    const deleteRider = async (id: string) => {
+        const res = await fetch(`/api/riders/${id}`, { method: 'DELETE' });
+        const body = await res.json().catch(() => ({}));
+        if (!res.ok) {
+            throw new Error(body?.error || 'Failed to delete rider');
+        }
+        return 'Rider deleted';
+    };
 
-                Math.random() > 0.5 ? reject("Deletion failed") : resolve("Rider deleted");
-            }, 1000);
-        });
-    }
-
-    const handleDelete = async () => {
+    const handleDelete = async (id: string) => {
         await toast.promise(
-            deleteRider(),
+            deleteRider(id),
             {
                 loading: 'Deleting...',
                 success: 'Rider deleted!',
-                error: 'Failed to delete rider',
+                error: (err) => err?.message || 'Failed to delete rider',
             }
-        )
-    }
+        );
+        // Optimistically remove from current list and adjust total count
+        setRows(prev => prev.filter(r => r.id !== id));
+        setTotalCount(prev => Math.max(0, prev - 1));
+        // If page becomes empty after deletion and not on first page, go back a page
+        setTimeout(() => {
+            const remainingOnPage = rows.length - 1; // minus the deleted one
+            if (remainingOnPage <= 0 && currentPage > 1) {
+                setCurrentPage(currentPage - 1);
+            }
+        }, 0);
+    };
 
     return (
         <div className="flex flex-col w-full space-y-6">
@@ -343,7 +352,7 @@ const Riders = () => {
                                                 <DialogHeader>
                                                     <DialogTitle>Are you absolutely sure?</DialogTitle>
                                                 </DialogHeader>
-                                                <DialogBody>
+                                                <div>
                                                     <DialogDescription>
                                                         You&#39;re trying to delete a rider&#39;s account.
                                                         <p>
@@ -351,7 +360,7 @@ const Riders = () => {
                                                             rider and disable the rider&#39;s account.
                                                         </p>
                                                     </DialogDescription>
-                                                </DialogBody>
+                                                </div>
                                                 <DialogFooter>
                                                     <div className="flex gap-2">
                                                         <DialogClose>
@@ -360,7 +369,7 @@ const Riders = () => {
                                                         <DialogClose>
                                                             <Button
                                                                 variant="destructive"
-                                                                onClick={handleDelete}>
+                                                                onClick={() => handleDelete(rider.id)}>
                                                                 Delete
                                                             </Button>
                                                         </DialogClose>
