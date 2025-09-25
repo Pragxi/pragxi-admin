@@ -2,9 +2,13 @@
 
 import {createClient} from "@/utils/supabase/server";
 
-export const getUserDataAction = async () => {
+type UserDataResponse = 
+  | { user: any; success: true } 
+  | { success: false; error: string };
+
+export const getUserDataAction = async (): Promise<UserDataResponse> => {
     const supabase = await createClient();
-    const {data: user, error} = await supabase.auth.getUser();
+    const { data: user, error } = await supabase.auth.getUser();
 
     if (error) {
         return {
@@ -13,5 +17,5 @@ export const getUserDataAction = async () => {
         };
     }
 
-    return user;
+    return { user, success: true };
 };
