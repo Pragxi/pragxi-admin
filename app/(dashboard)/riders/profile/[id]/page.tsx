@@ -112,8 +112,8 @@ const RiderProfile = () => {
                 {/* User Image and mini details */}
                 <div className="flex gap-4">
                     {/* Image */}
-                    <Image
-                        src={`${location.origin}/api/avatar/${id}`}
+                    <img
+                        src={`/api/avatar/${id}`}
                         alt="Rider"
                         height={100}
                         width={100}

@@ -25,7 +25,7 @@ const PassengerProfileLayout = ({children}: Readonly<{ children: ReactNode }>) =
                 <div className="flex flex-col gap-1">
                     <div className="flex gap-4 items-center">
                         {/* Image */}
-                        <Image
+                        <img
                             src={passenger.avatar}
                             alt="Passenger"
                             height={100}

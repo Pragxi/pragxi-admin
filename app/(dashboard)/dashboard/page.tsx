@@ -1,4 +1,5 @@
 "use client";
+import { useEffect, useState } from "react";
 import StatisticsCard from "@/components/dashboard/statistics-card";
 import {CurrencyCircleDollar} from "@phosphor-icons/react/dist/ssr";
 import {dashboardCharts} from "@/dummy/apex-charts";
@@ -10,7 +11,24 @@ const Chart = dynamic(() => import('react-apexcharts'), {ssr: false});
 
 
 export default function Dashboard() {
+    const [ridersCount, setRidersCount] = useState<number | null>(null);
+    const [passengersCount, setPassengersCount] = useState<number | null>(null);
 
+    useEffect(() => {
+        const fetchStats = async () => {
+            try {
+                const res = await fetch('/api/stats');
+                const body = await res.json();
+                if (!res.ok) throw new Error(body?.error || 'Failed to load stats');
+                setRidersCount(body.ridersCount ?? 0);
+                setPassengersCount(body.passengersCount ?? 0);
+            } catch (e) {
+                setRidersCount(0);
+                setPassengersCount(0);
+            }
+        };
+        fetchStats();
+    }, []);
 
     return (
         <div className="">
@@ -44,8 +62,8 @@ export default function Dashboard() {
                             className="text-gray-600"
                         />
                     }
-                    title="Active Riders"
-                    value="78"
+                    title="Riders"
+                    value={ridersCount === null ? '...' : String(ridersCount)}
                 />
                 <StatisticsCard
                     className="motion-preset-blur-right motion-delay-[120ms]"
@@ -56,8 +74,8 @@ export default function Dashboard() {
                             className="text-gray-600"
                         />
                     }
-                    title="Total Users"
-                    value="3,789"
+                    title="Passengers"
+                    value={passengersCount === null ? '...' : String(passengersCount)}
                 />
             </div>
             <div className="mt-4">

@@ -279,8 +279,8 @@ const Riders = () => {
                     {!loading && !error && sortedData.map((rider) => (
                         <TableRow key={rider.id}>
                             <TableCell suppressHydrationWarning>
-                                <Image
-                                    src={`${location.origin}/api/avatar/${rider.id}`}
+                                <img
+                                    src={`/api/avatar/${rider.id}`}
                                     alt={`${rider.name}'s avatar`}
                                     width={40}
                                     height={40}
