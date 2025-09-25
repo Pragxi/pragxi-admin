@@ -48,6 +48,13 @@ type Finance = {
     mobile_money_number: string | null;
 };
 
+type Documents = {
+    rider_id: string;
+    id_card_paths: string[] | null;
+    drivers_license_paths: string[] | null;
+    insurance_paths: string[] | null;
+};
+
 const RiderProfile = () => {
 
     const {id}: Params = useParams();
@@ -58,6 +65,7 @@ const RiderProfile = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [isEditing, setIsEditing] = useState(false);
+    const [documents, setDocuments] = useState<Documents | null>(null);
 
     useEffect(() => {
         const supabase = createClient();
@@ -88,9 +96,17 @@ const RiderProfile = () => {
                     .maybeSingle();
                 if (ferr && ferr.code !== 'PGRST116') throw new Error(ferr.message);
 
+                const { data: d, error: derr } = await supabase
+                    .from('riders_document_information')
+                    .select('*')
+                    .eq('rider_id', riderId)
+                    .maybeSingle();
+                if (derr && derr.code !== 'PGRST116') throw new Error(derr.message);
+
                 setPersonal(p as any);
                 setSecurity(s as any);
                 setFinance(f as any);
+                setDocuments(d as any);
             } catch (e: any) {
                 setError(e?.message || 'Failed to load rider');
             } finally {
@@ -246,7 +262,7 @@ const RiderProfile = () => {
                         </TabsContent>
 
                         <TabsContent value="document">
-                            <ViewRiderDocumentsForm editable={isEditing}/>
+                            <ViewRiderDocumentsForm editable={isEditing} data={documents ?? undefined} />
                         </TabsContent>
 
                         <TabsContent value="finance">

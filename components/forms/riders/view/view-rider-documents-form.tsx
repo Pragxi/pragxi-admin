@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -29,11 +29,18 @@ const formSchema = z.object({
     insurance: z.array(z.instanceof(File)).nonempty("At least one insurance file is required"),
 });
 
-type Props = {
-    editable?: boolean;
+type DocumentData = {
+    id_card_paths?: string[] | null;
+    drivers_license_paths?: string[] | null;
+    insurance_paths?: string[] | null;
 };
 
-const ViewRiderDocumentsForm = ({ editable = false }: Props) => {
+type Props = {
+    editable?: boolean;
+    data?: DocumentData;
+};
+
+const ViewRiderDocumentsForm = ({ editable = false, data }: Props) => {
     const [idCardFiles, setIdCardFiles] = useState<File[] | null>(null);
     const [driversLicenseFiles, setDriversLicenseFiles] = useState<File[] | null>(null);
     const [insuranceFiles, setInsuranceFiles] = useState<File[] | null>(null);
@@ -54,7 +61,7 @@ const ViewRiderDocumentsForm = ({ editable = false }: Props) => {
         },
     });
 
-    // Handle form submission
+    // Handle form submission (edit mode)
     function onSubmit(values: z.infer<typeof formSchema>) {
         try {
             console.log(values);
@@ -67,6 +74,51 @@ const ViewRiderDocumentsForm = ({ editable = false }: Props) => {
             console.error("Form submission error", error);
             toast.error("Failed to submit the form. Please try again.");
         }
+    }
+
+    const PreviewGrid: React.FC<{ title: string; urls?: string[] | null }> = ({ title, urls }) => {
+        const list = urls ?? [];
+        if (!list.length) return null;
+        return (
+            <div className="space-y-2">
+                <div className="font-medium">{title}</div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {list.map((url, idx) => {
+                        const isPdf = url.toLowerCase().endsWith('.pdf');
+                        return (
+                            <div key={`${title}-${idx}`} className="border rounded-md overflow-hidden">
+                                {isPdf ? (
+                                    <object data={url} type="application/pdf" width="100%" height="300">
+                                        <div className="p-3 text-sm">
+                                            PDF preview not available. <a href={url} target="_blank" rel="noreferrer" className="text-primary underline">Open PDF</a>
+                                        </div>
+                                    </object>
+                                ) : (
+                                    // eslint-disable-next-line @next/next/no-img-element
+                                    <img src={url} alt={`${title} ${idx + 1}`} className="w-full h-72 object-cover" />
+                                )}
+                                <div className="p-2 text-xs truncate">
+                                    <a href={url} target="_blank" rel="noreferrer" className="text-primary underline">View original</a>
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+            </div>
+        );
+    };
+
+    if (!editable) {
+        return (
+            <div className="space-y-6 my-3">
+                <PreviewGrid title="ID Card" urls={data?.id_card_paths} />
+                <PreviewGrid title="Driver's License" urls={data?.drivers_license_paths} />
+                <PreviewGrid title="Insurance" urls={data?.insurance_paths} />
+                {(!data?.id_card_paths?.length && !data?.drivers_license_paths?.length && !data?.insurance_paths?.length) && (
+                    <div className="text-sm text-gray-500">No documents uploaded.</div>
+                )}
+            </div>
+        );
     }
 
     return (
